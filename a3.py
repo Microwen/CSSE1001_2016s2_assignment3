@@ -42,7 +42,10 @@ class SimpleTileApp(object):
         self._grid_view.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
 
         # Add your code here
-
+        self._master.title("Chairman Mao")
+        self._master.geometry("600x600")
+        self._simplestausbar = SimpleStatusBar(self._master)
+        self._simplestausbar.pack(side = tk.BOTTOM)
 
 
     def _handle_swap(self, from_pos, to_pos):
@@ -78,9 +81,11 @@ class SimplePlayer(object):
 
 class SimpleStatusBar(tk.Frame):
     def __init__(self, master):
-        self._master = master
+        super().__init__(master)
         self._player = SimplePlayer()
-
+        self._status = tk.Frame(self).pack()
+        self._score = tk.Label(self._status, text = self._player.get_score).pack()
+        self._swap = tk.Label(self._status, text = self._player.get_swaps).pack()
     def get_player():
         return self._player
 
@@ -140,7 +145,9 @@ class SinglePlayerTileApp(object):
 
 def task1():
     # Add task 1 GUI code here
-    pass
+    root = tk.Tk()
+    app = SimpleTileApp(root)
+    root.mainloop()
 def task2():
     # Add task 2 GUI code here
     pass
