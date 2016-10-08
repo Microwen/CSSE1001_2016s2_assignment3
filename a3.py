@@ -23,6 +23,7 @@ from a3_support import *
 ################################################################################
 
 # Write your classes here (including import statements, etc.)
+from tkinter import messagebox
 
 class SimpleTileApp(object):
     def __init__(self, master):
@@ -42,22 +43,59 @@ class SimpleTileApp(object):
         self._grid_view.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
 
         # Add your code here
-        self._master.title("Chairman Mao")
+
+        menubar = tk.Menu(self._master,tearoff = 0)
+        master.config(menu=menubar)
+        filemenu = tk.Menu(menubar)
+        menubar.add_cascade(label="File", menu=filemenu)
+        filemenu.add_command(label="New Game", command = self.new_game)
+        filemenu.add_command(label="Exit", command=self.quit)
+        self._master.title("Simple Tile Game")
         self._master.geometry("600x600")
+        self._simpleplayer = SimplePlayer()
         self._simplestausbar = SimpleStatusBar(self._master)
         self._simplestausbar.pack(side = tk.BOTTOM)
+        self._topframe = tk.Frame(master)
+        self._topframe.pack(side = tk.TOP)
+        self._reset = tk.Button(self._topframe, text = 'Reset Status', command = self.reset)
+        self._reset.pack()
 
+
+    def new_game(self):
+        if TileGridView.is_resolving:
+            messagebox.showinfo(title="Resolving", message="The grid view is resolving")
+        else:
+            self._game.reset()
+            self._grid_view.draw()
+
+    def quit(self):
+        ans = messagebox.askokcancel('Verify exit', "Really quit?")
+        if ans:
+            self._master.destroy()
+
+    def reset(self):
+        if TileGridView.is_resolving:
+            messagebox.showinfo(title="Resolving", message="The grid view is resolving")
+        else:
+            self._simpleplayer.reset_score()
+            self._simpleplayer.reset_swaps()
+            self._simplestausbar.set_score(self._simpleplayer.get_score())
+            self._simplestausbar.set_swap(self._simpleplayer.get_swaps())
 
     def _handle_swap(self, from_pos, to_pos):
         """
         Run when a swap on the grid happens.
         """
+        self._simpleplayer.record_swap()
+        self._simplestausbar.set_swap(self._simpleplayer.get_swaps())
         print("SimplePlayer made a swap from {} to {}!".format(from_pos, to_pos))
 
     def _handle_score(self, score):
         """
         Run when a score update happens.
         """
+        self._simpleplayer.add_score(score)
+        self._simplestausbar.set_score(self._simpleplayer.get_score())
         print("SimplePlayer scored {}!".format(score))
 
 class SimplePlayer(object):
@@ -66,6 +104,7 @@ class SimplePlayer(object):
             self._swap = 0
         def add_score(self, score):
             self._score += score
+            print('add')
             return self._score
         def get_score(self):
             return self._score
@@ -82,12 +121,21 @@ class SimplePlayer(object):
 class SimpleStatusBar(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
-        self._player = SimplePlayer()
-        self._status = tk.Frame(self).pack()
-        self._score = tk.Label(self._status, text = self._player.get_score).pack()
-        self._swap = tk.Label(self._status, text = self._player.get_swaps).pack()
-    def get_player():
-        return self._player
+        self._status = tk.Frame(self)
+        self._status.pack()
+        self._score = tk.Label(self._status, text = 'Scores: 0')
+        self._score.pack(side = tk.LEFT)
+        self._swap = tk.Label(self._status, text = 'Swaps: 0')
+        self._swap.pack(side = tk.RIGHT)
+
+    def set_score(self,score):
+        score = 'Scores: '+str(score)
+        self._score.config(text = score)
+
+    def set_swap(self,swap):
+        swap = 'Swaps: '+str(swap)
+        self._swap.config(text = swap)
+
 
 class Character(object):
     def __init__(self,max_health):
