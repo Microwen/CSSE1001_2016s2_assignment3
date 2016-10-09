@@ -201,9 +201,62 @@ class Player(Character):
         return list1
 
 class VersusStatusBar(object):
-    pass
+    def __init__(self,master):
+        self._master = master
+        self._frame1 = tk.Frame(master)
+        self._frame1.pack(side = tk.TOP)
+        self._level = tk.Label(self._frame1, text = "Level: 1")
+        self._level.pack()
+        self._frame2 = tk.Frame(master)
+        self._frame2.pack(side = tk.BOTTOM, fill = tk.BOTH)
+        self._phframe = tk.Frame(self._frame2)
+        self._phframe.pack(side = tk.LEFT, fill = tk.BOTH, expand = 1)
+        self._ph = tk.Label(self._phframe, bg = 'green')
+        self._ph.pack(side = tk.LEFT, ipadx = 100, pady = 5)
+        self._phrest = tk.Label(self._phframe, bg = 'green')
+        self._phrest.pack(side = tk.LEFT, ipadx = 0, pady = 5)
+        self._ehframe = tk.Frame(self._frame2)
+        self._ehframe.pack(side = tk.RIGHT, fill = tk.BOTH, expand = 1)
+        self._eh = tk.Label(self._ehframe, bg = 'red')
+        self._eh.pack(side = tk.RIGHT,ipadx = 100, pady = 5)
+        self._ehrest = tk.Label(self._ehframe, bg = 'red')
+        self._ehrest.pack(side = tk.RIGHT,ipadx = 0, pady = 5)
+        self._swaps = tk.Label(self._frame2, text = 'Swaps: 0')
+        self._swaps.pack()
 
-class ImageTileGridView(object):
+    def set_swaps(self, swaps):
+        self._swaps.config(text = "Swaps: "+str(swaps))
+
+    def set_level(self, current):
+        self._level.config(text = "Level: "+str(current))
+
+    def set_ph(self, health):
+        rest = 100 - health
+        self._ph.pack(side = tk.LEFT, ipadx = health, pady = 5)
+        self._phrest.pack(side = tk.LEFT, ipadx = rest, pady = 5)
+        if rest == 0:
+            self._phrest.config(bg = 'green')
+        else:
+            self._phrest.config(bg = 'white')
+        if health == 0:
+            self._ph.config(bg = 'white')
+        else:
+            self._ph.config(bg = 'green')
+
+    def set_eh(self, health):
+        rest = 100 - health
+        self._eh.pack(side = tk.RIGHT, ipadx = health, pady = 5)
+        self._ehrest.pack(side = tk.RIGHT, ipadx = rest, pady = 5)
+        if rest == 0:
+            self._ehrest.config(bg = 'red')
+        else:
+            self._ehrest.config(bg = 'white')
+        if health == 0:
+            self._eh.config(bg = 'white')
+        else:
+            self._eh.config(bg = 'red')
+
+class ImageTileGridView(TileGridView):
     pass
 
 class SinglePlayerTileApp(object):
