@@ -62,7 +62,7 @@ class SimpleTileApp(object):
 
 
     def new_game(self):
-        if TileGridView.is_resolving:
+        if self._grid_view.is_resolving():
             messagebox.showinfo(title="Resolving", message="The grid view is resolving")
         else:
             self._game.reset()
@@ -74,7 +74,7 @@ class SimpleTileApp(object):
             self._master.destroy()
 
     def reset(self):
-        if TileGridView.is_resolving:
+        if self._grid_view.is_resolving():
             messagebox.showinfo(title="Resolving", message="The grid view is resolving")
         else:
             self._simpleplayer.reset_score()
@@ -139,48 +139,66 @@ class SimpleStatusBar(tk.Frame):
 
 class Character(object):
     def __init__(self,max_health):
-        pass
+        self._max_health = max_health
+        self._health = max_health
 
     def get_max_health(self):
-        pass
+        return self._max_health
 
     def get_health(self):
-        pass
+        return self._health
 
     def lose_health(self, amount):
-        pass
+        self._health -= amount
+        if self._health < 0:
+            self._health = 0
 
     def gain_health(self, amount):
-        pass
+        self._health += amount
+        if self._health > self._max_health:
+            self._health = self._max_health
 
     def reset_health(self):
-        pass
+        self._health = self._max_health
 
 class Enemy(Character):
     def __init__(self, type, max_health, attack):
-        pass
+        super().__init__(max_health)
+        self._type = type
+        self._attack = attack
 
     def get_type(self):
-        pass
+        return self._type
 
     def attack(self):
-        pass
+        return random.randint(self._attack[0],self._attack[1])
 
 class Player(Character):
     def __init__(self, max_health, swaps_per_turn):
-        pass
+        super().__init__(max_health)
+        self._swaps_per_turn = swaps_per_turn
+        self._swaps_per_turn_max = swaps_per_turn
 
     def record_swap(self):
-        pass
+        self._swaps_per_turn -= 1
+        if self._swaps_per_turn < 0:
+            self._swaps_per_turn = 0
+        return self._swaps_per_turn
 
     def get_swaps(self):
-        pass
+        return self._swaps_per_turn
 
     def reset_swaps(self):
-        pass
+        self._swaps_per_turn = self._swaps_per_turn_max
 
-    def attack(self, runs):
-        pass
+    def attack(self, runs,defender_type):
+        list1 = []
+        for i in runs:
+            tile = str(i[i.find_dominant_cell()])
+            tile = tile[6:len(tile)-2]
+            damage = len(i)*i.get_max_dimension()*((i.get_dimensions()[0]+1)*(i.get_dimensions()[1]+1))
+            list1.append((tile,damage))
+        return list1
 
 class VersusStatusBar(object):
     pass
@@ -213,5 +231,5 @@ def main():
 # Write your code above - NOTE you should define a top-level
 # class (the application) called Breakout
 ################################################################################
-if __name__ == '__main__':
-    main()
+#if __name__ == '__main__':
+#    main()

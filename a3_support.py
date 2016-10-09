@@ -1144,7 +1144,6 @@ class TileGridView(tk.Canvas):
 
         def done():
             self._resolving = False
-
         callback = lambda: self._master.after(500, stepper)
         steps = process_run_string(callback)
         stepper = self._create_animation_stepper(steps, None,
