@@ -67,9 +67,13 @@ class SimpleTileApp(object):
         else:
             self._game.reset()
             self._grid_view.draw()
+            self._simpleplayer.reset_score()
+            self._simplestausbar.set_score(self._simpleplayer.get_score())
+            self._simpleplayer.reset_swaps()
+            self._simplestausbar.set_swap(self._simpleplayer.get_swaps())
 
     def quit(self):
-        ans = messagebox.askokcancel('Verify exit', "Really quit?")
+        ans = messagebox.askokcancel('Exit', "Do you want to quit?")
         if ans:
             self._master.destroy()
 
@@ -200,7 +204,7 @@ class Player(Character):
             list1.append((tile,damage))
         return list1
 
-class VersusStatusBar(object):
+class VersusStatusBar(tk.Frame):
     def __init__(self,master):
         self._master = master
         self._frame1 = tk.Frame(master)
@@ -284,5 +288,5 @@ def main():
 # Write your code above - NOTE you should define a top-level
 # class (the application) called Breakout
 ################################################################################
-#if __name__ == '__main__':
-#    main()
+if __name__ == '__main__':
+    main()
