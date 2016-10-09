@@ -62,19 +62,19 @@ class SimpleTileApp(object):
 
 
     def new_game(self):
-        if TileGridView.is_resolving:
+        if self._grid_view.is_resolving():
             messagebox.showinfo(title="Resolving", message="The grid view is resolving")
         else:
             self._game.reset()
             self._grid_view.draw()
 
     def quit(self):
-        ans = messagebox.askokcancel('Verify exit', "Really quit?")
+        ans = messagebox.askokcancel('Quit', "Do you want to quit?")
         if ans:
             self._master.destroy()
 
     def reset(self):
-        if TileGridView.is_resolving:
+        if self._grid_view.is_resolving():
             messagebox.showinfo(title="Resolving", message="The grid view is resolving")
         else:
             self._simpleplayer.reset_score()
@@ -99,26 +99,32 @@ class SimpleTileApp(object):
         print("SimplePlayer scored {}!".format(score))
 
 class SimplePlayer(object):
-        def __init__(self):
-            self._score = 0
-            self._swap = 0
-        def add_score(self, score):
-            self._score += score
-            print('add')
-            return self._score
-        def get_score(self):
-            return self._score
-        def reset_score(self):
-            self._score = 0
-        def record_swap(self):
-            self._swap += 1
-            return self._swap
-        def get_swaps(self):
-            return self._swap
-        def reset_swaps(self):
-            self._swap = 0
+    """
+    Manage the basic info of the player.
+    """
+    def __init__(self):
+        self._score = 0
+        self._swap = 0
+    def add_score(self, score):
+        self._score += score
+        print('add')
+        return self._score
+    def get_score(self):
+        return self._score
+    def reset_score(self):
+        self._score = 0
+    def record_swap(self):
+        self._swap += 1
+        return self._swap
+    def get_swaps(self):
+        return self._swap
+    def reset_swaps(self):
+        self._swap = 0
 
 class SimpleStatusBar(tk.Frame):
+    """
+    Display the statusbar.
+    """
     def __init__(self, master):
         super().__init__(master)
         self._status = tk.Frame(self)
@@ -138,52 +144,100 @@ class SimpleStatusBar(tk.Frame):
 
 
 class Character(object):
+    """
+    Manage all the characters in the game.
+    """
     def __init__(self,max_health):
-        pass
+        self._max_health = max_health
+        self._health = max_health
 
     def get_max_health(self):
-        pass
+        return self._max_health
 
     def get_health(self):
-        pass
+        return self._health
 
     def lose_health(self, amount):
-        pass
+        self._health -= amount
+        if self._health < 0:
+            self._health = 0
 
     def gain_health(self, amount):
-        pass
+        self._health += amount
+        if self._health > self._max_health:
+            self._health = self._max_health
 
     def reset_health(self):
-        pass
+        self._health = self._max_health
 
 class Enemy(Character):
+    """
+    Manage the Enemy.
+    """
     def __init__(self, type, max_health, attack):
-        pass
+        super().__init__(max_health)
+        self._type = type
+        self._attack = attack
 
     def get_type(self):
-        pass
+        return self._type
 
     def attack(self):
-        pass
+        return random.randint(self._attack[0],self._attack[1])
 
 class Player(Character):
+    """
+    Manage the Player.
+    """
     def __init__(self, max_health, swaps_per_turn):
-        pass
+        super().__init__(max_health)
+        self._swaps_per_turn = swaps_per_turn
+        self._swaps_per_turn_max = swaps_per_turn
 
     def record_swap(self):
-        pass
+        self._swaps_per_turn -= 1
+        if self._swaps_per_turn < 0:
+            self._swaps_per_turn = 0
+        return self._swaps_per_turn
 
     def get_swaps(self):
-        pass
+        return self._swaps_per_turn
 
     def reset_swaps(self):
-        pass
+        self._swaps_per_turn = self._swaps_per_turn_max
 
-    def attack(self, runs):
-        pass
+    def attack(self, runs,defender_type):
+        list1 = []
+        for i in runs:
+            tile = str(i[i.find_dominant_cell()])
+            tile = tile[6:len(tile)-2]
+            damage = len(i)*i.get_max_dimension()*((i.get_dimensions()[0]+1)*(i.get_dimensions()[1]+1))
+            list1.append((tile,damage))
+        return list1
 
-class VersusStatusBar(object):
-    pass
+class VersusStatusBar(tk.Frame):
+    def __init__(self,master):
+        self._master = master
+        self._frame1 = tk.Frame(master)
+        self._frame1.pack(side = tk.TOP)
+        self._level = tk.Label(self._frame1, text = "Level: ")
+        self._frame2 = tk.Frame(master)
+        self._frame2.pack(side = tk.BOTTOM)
+
+        self._phframe = tk.Frame(self._frame2, width = 20, height = 100)
+        self._phframe.pack(side = tk.LEFT)
+        self._phrest = tk.Label(self._phframe, bg = 'green' ,expand = 100)
+        self._phrest.pack(side = tk.LEFT, fill = tk.BOTH)
+        self._phmax = tk.Label(self._phframe, bg = 'white', expand = 0)
+        self._phmax.pack(side = tk.RIGHT, fill = tk.BOTH)
+
+        self._ehframe = tk.Frame(self._frame2, width = 20, height = 100)
+        self._ehframe.pack(side = tk.RIGHT)
+        self._ehrest = tk.Label(self._ehframe, bg = 'red' ,expand = 100)
+        self._ehrest.pack(side = tk.RIGHT, fill = tk.BOTH)
+        self._ehmax = tk.Label(self._ehframe, bg = 'white', expand = 0)
+        self._ehmax.pack(side = tk.LEFT, fill = tk.BOTH)
+
 
 class ImageTileGridView(object):
     pass
@@ -198,7 +252,9 @@ def task1():
     root.mainloop()
 def task2():
     # Add task 2 GUI code here
-    pass
+    root = tk.Tk()
+    app = SinglePlayerTileApp(root)
+    root.mainloop()
 
 def task3():
     # Add task 3 GUI code here
