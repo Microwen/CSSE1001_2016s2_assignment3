@@ -182,6 +182,14 @@ class Enemy(Character):
         self._type = type
         self._attack = attack
 
+    def set_attack(self,attack):
+        self._attack = attack
+        if self._attack[1]>300:
+            self._attack[0] = 300
+
+    def get_attack(self):
+        return self._attack
+
     def get_type(self):
         return self._type
 
@@ -194,6 +202,9 @@ class Player(Character):
         self._swaps_per_turn = swaps_per_turn
         self._swaps_left = swaps_per_turn
         self._base_attack = base_attack
+
+    def get_swaps_per_turn(self):
+        return self._swaps_per_turn
 
     def record_swap(self):
         self._swaps_left -= 1
@@ -222,9 +233,9 @@ class VersusStatusBar(tk.Frame):
     Manage the statusbar.
     """
     def __init__(self,master):
-        self._master = master
+        super().__init__(master)
         #Frame 1
-        self._frame1 = tk.Frame(master)
+        self._frame1 = tk.Frame(self)
         self._frame1.pack(side = tk.TOP)
         self._level = tk.Label(self._frame1, text = LEVEL_FORMAT.format(1))
         self._level.pack()
@@ -294,9 +305,9 @@ class VersusStatusBar(tk.Frame):
         if rest == 0:
             self._phrest.config(bg = 'green')
         else:
-            self._phrest.config(bg = 'white')
+            self._phrest.config(bg = 'grey')
         if health == 0:
-            self._ph.config(bg = 'white')
+            self._ph.config(bg = 'grey')
         else:
             self._ph.config(bg = 'green')
 
@@ -312,9 +323,9 @@ class VersusStatusBar(tk.Frame):
         if rest == 0:
             self._ehrest.config(bg = 'red')
         else:
-            self._ehrest.config(bg = 'white')
+            self._ehrest.config(bg = 'grey')
         if health == 0:
-            self._eh.config(bg = 'white')
+            self._eh.config(bg = 'grey')
         else:
             self._eh.config(bg = 'red')
 
@@ -325,7 +336,6 @@ class ImageTileGridView(TileGridView):
         TileGridView.undraw_tile_sprite(TileGridView, (int, int), Tile, bool)
                                                                     -> None"""
         colour = tile.get_colour()
-        colour = "IMAGE"
         width, height = self._calculate_tile_size(xy_pos, selected)
         x, y = xy_pos
         return self.create_rectangle(
@@ -337,10 +347,10 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._master.title('Tile Game - Level 1')
         self._game = SimpleGame()
 
-        #self._game.on('swap', self._handle_swap)
-        #self._game.on('score', self._handle_score)
+        self._game.on('swap', self._handle_swap)
+        self._game.on('score', self.attack_enemy)
 
-        self._grid_view = ImageTileGridView(
+        self._grid_view = TileGridView(
             master, self._game.get_grid(),
             width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
         self._grid_view.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
@@ -352,17 +362,113 @@ class SinglePlayerTileApp(SimpleTileApp):
 
         filemenu.add_command(label="New Game", command = self.new_game)
         filemenu.add_command(label="Exit", command=self.quit)
-
+        self._statusbar = VersusStatusBar(self._master)
+        self._statusbar.pack(side = tk.BOTTOM)
         self._player = Player(PLAYER_BASE_HEALTH,SWAPS_PER_TURN,PLAYER_BASE_ATTACK)
-        self._enemy = Enemy("type",ENEMY_BASE_HEALTH,ENEMY_BASE_ATTACK)
-        self._stausbar = VersusStatusBar(self._master)
-        self._stausbar.pack(side = tk.BOTTOM)
+        self._statusbar.set_pmax(self._player.get_max_health())
+        self._statusbar.set_ph(self._player.get_health())
+        self._enemy = Enemy("type",ENEMY_BASE_HEALTH,(ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
+        self._statusbar.set_emax(self._enemy.get_max_health())
+        self._statusbar.set_eh(self._enemy.get_health())
+
+        #base info
+        self._level_count = 1
+        self.base_attack = 5
+        self._statusbar.set_swaps_per_turn(self._player.get_swaps_per_turn())
+        self._statusbar.set_swaps(self._player.get_swaps())
+        #
+
+
+    def die(self):
+        self._game.reset()
+        self._grid_view.draw()
+
+        self._enemy.set_attack((ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
+        self._level_count = 1
+        self.base_attack = 5
+
+        self._player.gain_health(self._player.get_max_health())
+        self.set_player_h(self._player.get_health())
+
+        self._enemy.gain_health(self._enemy.get_max_health())
+        self.set_enemy_h(self._enemy.get_health())
+
+        self._player.reset_swaps()
+        self._statusbar.set_swaps(self._player.get_swaps())
 
     def new_game(self):
-        pass
+        if self._grid_view.is_resolving():
+            messagebox.showinfo(title="Resolving", message="The grid view is resolving")
+        else:
+            self._game.reset()
+            self._grid_view.draw()
 
-    def set_level(self,levels):
-        self._master.title('Tile Game - Level {}'.format(levels))
+            self._enemy.set_attack((ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
+            self._level_count = 1
+            self.base_attack = 5
+
+            self._player.gain_health(self._player.get_max_health())
+            self.set_player_h(self._player.get_health())
+
+            self._enemy.gain_health(self._enemy.get_max_health())
+            self.set_enemy_h(self._enemy.get_health())
+
+            self._player.reset_swaps()
+            self._statusbar.set_swaps(self._player.get_swaps())
+
+    def next_level(self):
+        self._level_count += 1
+        self.refresh_level()
+        self._game.reset()
+        self._grid_view.draw()
+        self.base_attack += 2
+        self._enemy.set_attack((self._enemy.get_attack()[0],self._enemy.get_attack()[1]+40))
+
+        self._player.gain_health(self._player.get_max_health())
+        self.set_player_h(self._player.get_health())
+
+        self._enemy.gain_health(self._enemy.get_max_health())
+        self.set_enemy_h(self._enemy.get_health())
+
+        self._player.reset_swaps()
+        self._statusbar.set_swaps(self._player.get_swaps())
+
+    def set_enemy_h(self,health):
+        self._statusbar.set_eh(health)
+
+    def set_player_h(self,health):
+        self._statusbar.set_ph(health)
+
+    def refresh_level(self):
+        self._master.title('Tile Game - Level {}'.format(self._level_count))
+        self._statusbar.set_level(self._level_count)
+
+    def attack_player(self, damage):
+        self._player.lose_health(damage)
+        self.set_player_h(self._player.get_health())
+        if self._player.get_health() == 0:
+            messagebox.showinfo(title="Die!Die!Die!", message="Congratulation,You Die!")
+            self.die()
+
+    def _handle_swap(self, from_pos, to_pos):
+        """
+        Run when a swap on the grid happens.
+        """
+        self._player.record_swap()
+        self._statusbar.set_swaps(self._player.get_swaps())
+        if self._player.get_swaps() == 0:
+            self.attack_player(int(self._enemy.attack()))
+            self._player.reset_swaps()
+            self._statusbar.set_swaps(self._player.get_swaps())
+
+    def attack_enemy(self, score):
+        """
+        Attack Enemy.
+        """
+        self._enemy.lose_health((score)/self.base_attack)
+        self.set_enemy_h(self._enemy.get_health())
+        if self._enemy.get_health() == 0:
+            self.next_level()
 
 def task1():
     # Add task 1 GUI code here
@@ -381,7 +487,7 @@ def task3():
 
 def main():
     # Choose relevant task to run
-    task1()
+    task2()
 
 
 ################################################################################
