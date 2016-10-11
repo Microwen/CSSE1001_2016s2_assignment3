@@ -53,7 +53,6 @@ class SimpleTileApp(object):
         filemenu.add_command(label="Exit", command=self.quit)
 
         self._master.title("Simple Tile Game")
-        self._master.geometry("600x600")
 
         self._simpleplayer = SimplePlayer()
         self._simplestausbar = SimpleStatusBar(self._master)
@@ -332,8 +331,38 @@ class ImageTileGridView(TileGridView):
         return self.create_rectangle(
             x - width, y - height, x + width, y + height, fill=colour)
 
-class SinglePlayerTileApp(object):
-    pass
+class SinglePlayerTileApp(SimpleTileApp):
+    def __init__(self,master):
+        self._master = master
+        self._master.title('Tile Game - Level 1')
+        self._game = SimpleGame()
+
+        #self._game.on('swap', self._handle_swap)
+        #self._game.on('score', self._handle_score)
+
+        self._grid_view = ImageTileGridView(
+            master, self._game.get_grid(),
+            width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
+        self._grid_view.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
+
+        menubar = tk.Menu(self._master,tearoff = 0)
+        master.config(menu=menubar)
+        filemenu = tk.Menu(menubar)
+        menubar.add_cascade(label="File", menu=filemenu)
+
+        filemenu.add_command(label="New Game", command = self.new_game)
+        filemenu.add_command(label="Exit", command=self.quit)
+
+        self._player = Player(PLAYER_BASE_HEALTH,SWAPS_PER_TURN,PLAYER_BASE_ATTACK)
+        self._enemy = Enemy("type",ENEMY_BASE_HEALTH,ENEMY_BASE_ATTACK)
+        self._stausbar = VersusStatusBar(self._master)
+        self._stausbar.pack(side = tk.BOTTOM)
+
+    def new_game(self):
+        pass
+
+    def set_level(self,levels):
+        self._master.title('Tile Game - Level {}'.format(levels))
 
 def task1():
     # Add task 1 GUI code here
