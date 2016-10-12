@@ -24,7 +24,6 @@ from a3_support import *
 
 # Write your classes here (including import statements, etc.)
 from tkinter import messagebox
-
 class SimpleTileApp(object):
     def __init__(self, master):
         """
@@ -190,6 +189,9 @@ class Enemy(Character):
     def get_attack(self):
         return self._attack
 
+    def set_type(self, type):
+        self._type = type
+
     def get_type(self):
         return self._type
 
@@ -224,7 +226,6 @@ class Player(Character):
             tile = str(i[i.find_dominant_cell()])
             tile = tile[6:len(tile)-2]
             damage = len(i)*i.get_max_dimension()*self._base_attack
-
             list1.append((tile,damage))
         return list1
 
@@ -330,16 +331,52 @@ class VersusStatusBar(tk.Frame):
             self._eh.config(bg = 'red')
 
 class ImageTileGridView(TileGridView):
+    def __init__(self, master, grid, *args, width=GRID_WIDTH,
+                 height=GRID_HEIGHT,
+                 cell_width=GRID_CELL_WIDTH, cell_height=GRID_CELL_HEIGHT,
+                 **kwargs):
+        
+        self._light_sky_blue = tk.PhotoImage(file = 'light sky blue.gif')
+        self._purple = tk.PhotoImage(file = 'purple.gif')
+        self._gold = tk.PhotoImage(file = 'gold.gif')
+        self._green = tk.PhotoImage(file = 'green.gif')
+        self._blue = tk.PhotoImage(file = 'blue.gif')
+        self._red = tk.PhotoImage(file = 'red.gif')
+        self._light_sky_blues = tk.PhotoImage(file = 'light sky blues.gif')
+        self._purples = tk.PhotoImage(file = 'purples.gif')
+        self._golds = tk.PhotoImage(file = 'golds.gif')
+        self._greens = tk.PhotoImage(file = 'greens.gif')
+        self._blues = tk.PhotoImage(file = 'blues.gif')
+        self._reds = tk.PhotoImage(file = 'reds.gif')
+        self._images = {'red':self._red,
+                        'blue': self._blue,
+                        'green':self._green,
+                        'gold':self._gold,
+                        'purple':self._purple,
+                        'light sky blue':self._light_sky_blue}
+        self._images_selected = {'red':self._reds,
+                        'blue': self._blues,
+                        'green':self._greens,
+                        'gold':self._golds,
+                        'purple':self._purples,
+                        'light sky blue':self._light_sky_blues}
+        super().__init__(master, grid, *args, width=GRID_WIDTH,
+                 height=GRID_HEIGHT,
+                 cell_width=GRID_CELL_WIDTH, cell_height=GRID_CELL_HEIGHT,
+                 **kwargs)
+
     def draw_tile_sprite(self, xy_pos, tile, selected):
         """Draws the sprite for the given tile at given (x, y) position.
 
         TileGridView.undraw_tile_sprite(TileGridView, (int, int), Tile, bool)
                                                                     -> None"""
         colour = tile.get_colour()
-        width, height = self._calculate_tile_size(xy_pos, selected)
+        #width, height = self._calculate_tile_size(xy_pos, selected)
         x, y = xy_pos
-        return self.create_rectangle(
-            x - width, y - height, x + width, y + height, fill=colour)
+        if selected:
+            return self.create_image(x,y, image = self._images_selected[colour])
+        else:
+            return self.create_image(x,y, image = self._images[colour])
 
 class SinglePlayerTileApp(SimpleTileApp):
     def __init__(self,master):
@@ -348,9 +385,9 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._game = SimpleGame()
 
         self._game.on('swap', self._handle_swap)
-        self._game.on('score', self.attack_enemy)
+        self._game.on('run', self._handle_runs)
 
-        self._grid_view = TileGridView(
+        self._grid_view = ImageTileGridView(
             master, self._game.get_grid(),
             width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
         self._grid_view.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
@@ -367,29 +404,32 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._player = Player(PLAYER_BASE_HEALTH,SWAPS_PER_TURN,PLAYER_BASE_ATTACK)
         self._statusbar.set_pmax(self._player.get_max_health())
         self._statusbar.set_ph(self._player.get_health())
-        self._enemy = Enemy("type",ENEMY_BASE_HEALTH,(ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
+        self._defender_type = list(TILE_PROBABILITIES)
+        self._enemy = Enemy(self._defender_type[random.randint(0,len(self._defender_type)-1)],
+                            ENEMY_BASE_HEALTH,(ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
         self._statusbar.set_emax(self._enemy.get_max_health())
         self._statusbar.set_eh(self._enemy.get_health())
 
         #base info
         self._level_count = 1
-        self.base_attack = 5
+        self.base_attack = 3
         self._statusbar.set_swaps_per_turn(self._player.get_swaps_per_turn())
         self._statusbar.set_swaps(self._player.get_swaps())
-        #
-
 
     def die(self):
+        messagebox.showinfo(title="Die!Die!Die!", message="Congratulation, you died!")
         self._game.reset()
         self._grid_view.draw()
 
         self._enemy.set_attack((ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
         self._level_count = 1
-        self.base_attack = 5
+        self.refresh_level()
+        self.base_attack = 3
 
         self._player.gain_health(self._player.get_max_health())
         self.set_player_h(self._player.get_health())
 
+        self._enemy.set_type(self._defender_type[random.randint(0,len(self._defender_type)-1)])
         self._enemy.gain_health(self._enemy.get_max_health())
         self.set_enemy_h(self._enemy.get_health())
 
@@ -397,19 +437,20 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._statusbar.set_swaps(self._player.get_swaps())
 
     def new_game(self):
-        if self._grid_view.is_resolving():
-            messagebox.showinfo(title="Resolving", message="The grid view is resolving")
-        else:
+        ans = messagebox.askokcancel('New game', "Do you want to START a new game?")
+        if ans:
             self._game.reset()
             self._grid_view.draw()
 
             self._enemy.set_attack((ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
             self._level_count = 1
-            self.base_attack = 5
+            self.refresh_level()
+            self.base_attack = 3
 
             self._player.gain_health(self._player.get_max_health())
             self.set_player_h(self._player.get_health())
 
+            self._enemy.set_type(self._defender_type[random.randint(0,len(self._defender_type)-1)])
             self._enemy.gain_health(self._enemy.get_max_health())
             self.set_enemy_h(self._enemy.get_health())
 
@@ -417,6 +458,7 @@ class SinglePlayerTileApp(SimpleTileApp):
             self._statusbar.set_swaps(self._player.get_swaps())
 
     def next_level(self):
+        messagebox.showinfo(title="Congratulation", message="Level Completed, move to next level")
         self._level_count += 1
         self.refresh_level()
         self._game.reset()
@@ -427,6 +469,7 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._player.gain_health(self._player.get_max_health())
         self.set_player_h(self._player.get_health())
 
+        self._enemy.set_type(self._defender_type[random.randint(0,len(self._defender_type)-1)])
         self._enemy.gain_health(self._enemy.get_max_health())
         self.set_enemy_h(self._enemy.get_health())
 
@@ -447,7 +490,6 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._player.lose_health(damage)
         self.set_player_h(self._player.get_health())
         if self._player.get_health() == 0:
-            messagebox.showinfo(title="Die!Die!Die!", message="Congratulation,You Die!")
             self.die()
 
     def _handle_swap(self, from_pos, to_pos):
@@ -461,10 +503,13 @@ class SinglePlayerTileApp(SimpleTileApp):
             self._player.reset_swaps()
             self._statusbar.set_swaps(self._player.get_swaps())
 
-    def attack_enemy(self, score):
-        """
-        Attack Enemy.
-        """
+    def _handle_runs(self, runs):
+        score = 0
+        for i in self._player.attack(runs,self._enemy.get_type()):
+            if i[0] == self._enemy.get_type():
+                pass
+            else:
+                score += i[1]
         self._enemy.lose_health((score)/self.base_attack)
         self.set_enemy_h(self._enemy.get_health())
         if self._enemy.get_health() == 0:
