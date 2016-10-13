@@ -276,7 +276,7 @@ class VersusStatusBar(tk.Frame):
         self._swaps_per_turn = None
         self._swaps = tk.Label(self._frame2, text = SWAPS_LEFT_FORMAT.format(\
             self._swaps_per_turn, self._swaps_per_turn))
-        self._swaps.pack()
+        self._swaps.pack(ipadx = 20)
 
     def set_pmax(self, max):
         self._phmax = max
@@ -365,6 +365,9 @@ class ImageTileGridView(TileGridView):
                  cell_width=GRID_CELL_WIDTH, cell_height=GRID_CELL_HEIGHT,
                  **kwargs)
 
+    def return_image(self):
+        return self._images
+
     def draw_tile_sprite(self, xy_pos, tile, selected):
         """Draws the sprite for the given tile at given (x, y) position.
 
@@ -390,7 +393,13 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._grid_view = ImageTileGridView(
             master, self._game.get_grid(),
             width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
-        self._grid_view.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
+        self._grid_view.pack(side=tk.TOP)
+
+
+        self._canvas1 = tk.Canvas(master,width = 100, height = 100)
+        self._canvas1.pack(side = tk.LEFT)
+        self._canvas2 = tk.Canvas(master,width = 100, height = 100)
+        self._canvas2.pack(side = tk.RIGHT)
 
         menubar = tk.Menu(self._master,tearoff = 0)
         master.config(menu=menubar)
@@ -410,6 +419,10 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._statusbar.set_emax(self._enemy.get_max_health())
         self._statusbar.set_eh(self._enemy.get_health())
 
+        self._player_image = tk.PhotoImage(file = 'player.gif')
+        self._canvas1.create_image(50,50,image = self._player_image)
+        self.image_enemy = self._canvas2.create_image(50,50,image = self._grid_view.return_image()[TILE_COLOURS[self._enemy.get_type()]])
+
         #base info
         self._level_count = 1
         self.base_attack = 3
@@ -417,14 +430,9 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._statusbar.set_swaps(self._player.get_swaps())
 
     def die(self):
-        messagebox.showinfo(title="Die!Die!Die!", message="Congratulation, you died!")
+        messagebox.showinfo(title="Die!Die!Die!", message="You died!")
         self._game.reset()
         self._grid_view.draw()
-
-        self._enemy.set_attack((ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
-        self._level_count = 1
-        self.refresh_level()
-        self.base_attack = 3
 
         self._player.gain_health(self._player.get_max_health())
         self.set_player_h(self._player.get_health())
@@ -434,6 +442,7 @@ class SinglePlayerTileApp(SimpleTileApp):
         self.set_enemy_h(self._enemy.get_health())
 
         self._player.reset_swaps()
+        self._canvas2.itemconfig(self.image_enemy, image = self._grid_view.return_image()[TILE_COLOURS[self._enemy.get_type()]])
         self._statusbar.set_swaps(self._player.get_swaps())
 
     def new_game(self):
@@ -455,6 +464,7 @@ class SinglePlayerTileApp(SimpleTileApp):
             self.set_enemy_h(self._enemy.get_health())
 
             self._player.reset_swaps()
+            self._canvas2.itemconfig(self.image_enemy, image = self._grid_view.return_image()[TILE_COLOURS[self._enemy.get_type()]])
             self._statusbar.set_swaps(self._player.get_swaps())
 
     def next_level(self):
@@ -474,6 +484,7 @@ class SinglePlayerTileApp(SimpleTileApp):
         self.set_enemy_h(self._enemy.get_health())
 
         self._player.reset_swaps()
+        self._canvas2.itemconfig(self.image_enemy, image = self._grid_view.return_image()[TILE_COLOURS[self._enemy.get_type()]])
         self._statusbar.set_swaps(self._player.get_swaps())
 
     def set_enemy_h(self,health):
@@ -507,7 +518,7 @@ class SinglePlayerTileApp(SimpleTileApp):
         score = 0
         for i in self._player.attack(runs,self._enemy.get_type()):
             if i[0] == self._enemy.get_type():
-                pass
+                self.attack_player(i[1]/5)
             else:
                 score += i[1]
         self._enemy.lose_health((score)/self.base_attack)
