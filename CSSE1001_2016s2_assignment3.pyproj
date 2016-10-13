@@ -3,9 +3,9 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{1ca381d4-f849-4bc0-bbe1-7b3258255002}</ProjectGuid>
+    <ProjectGuid>{a0465504-fcc5-4183-b0ac-e23fede3eb3d}</ProjectGuid>
     <ProjectHome />
-    <StartupFile />
+    <StartupFile>a3.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -20,6 +20,29 @@
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="a3.py" />
+    <Compile Include="a3_support.py" />
+    <Compile Include="ee.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="images\blue.gif" />
+    <Content Include="images\blues.gif" />
+    <Content Include="images\gold.gif" />
+    <Content Include="images\golds.gif" />
+    <Content Include="images\green.gif" />
+    <Content Include="images\greens.gif" />
+    <Content Include="images\light sky blue.gif" />
+    <Content Include="images\light sky blues.gif" />
+    <Content Include="images\player.gif" />
+    <Content Include="images\purple.gif" />
+    <Content Include="images\purples.gif" />
+    <Content Include="images\red.gif" />
+    <Content Include="images\reds.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="images" />
+  </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
 </Project>

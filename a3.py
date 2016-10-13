@@ -24,6 +24,7 @@ from a3_support import *
 
 # Write your classes here (including import statements, etc.)
 from tkinter import messagebox
+import socket, time
 class SimpleTileApp(object):
     def __init__(self, master):
         """
@@ -60,11 +61,16 @@ class SimpleTileApp(object):
         self._topframe = tk.Frame(master)
         self._topframe.pack(side = tk.TOP)
 
-        self._reset = tk.Button(self._topframe, text = 'Reset Status', command = self.reset)
+        self._reset = tk.Button(self._topframe, 
+                                text = 'Reset Status', 
+                                command = self.reset)
         self._reset.pack()
 
 
     def new_game(self):
+        """
+        Start a new game, reset score and also swaps player made to zero.
+        """
         if self._grid_view.is_resolving():
             messagebox.showinfo(title="Resolving", message="The grid view is resolving")
         else:
@@ -78,11 +84,17 @@ class SimpleTileApp(object):
             self._simplestausbar.set_swap(self._simpleplayer.get_swaps())
 
     def quit(self):
+        """
+        Quit the Game.
+        """
         ans = messagebox.askokcancel('Exit', "Do you want to quit?")
         if ans:
             self._master.destroy()
 
     def reset(self):
+        """
+        Reset the score and swaps.
+        """
         if self._grid_view.is_resolving():
             messagebox.showinfo(title="Resolving", message="The grid view is resolving")
         else:
@@ -109,30 +121,66 @@ class SimpleTileApp(object):
         print("SimplePlayer scored {}!".format(score))
 
 class SimplePlayer(object):
-        def __init__(self):
-            self._score = 0
-            self._swap = 0
+    """
+    Manage the player info.
+    """
+    def __init__(self):
+        """
+        Constructor(SimplePlayer)
+        """
+        self._score = 0
+        self._swap = 0
 
-        def add_score(self, score):
-            self._score += score
-            return self._score
-        def get_score(self):
-            return self._score
+    def add_score(self, score):
+        """
+        Add score of player and return it.
 
-        def reset_score(self):
-            self._score = 0
+        SimplePlayer.add_score(SimplePlayer, int) -> int
+        """
+        self._score += score
+        return self._score
+    def get_score(self):
+        """
+        Return the current score of player.
 
-        def record_swap(self):
-            self._swap += 1
-            return self._swap
-        def get_swaps(self):
-            return self._swap
+        SimplePlayer.get_score(SimplePlayer) -> int
+        """
+        return self._score
 
-        def reset_swaps(self):
-            self._swap = 0
+    def reset_score(self):
+        """
+        Reset player's score to zero.
+
+        SimplePlayer.reset_score(SimplePlayer)
+        """
+        self._score = 0
+
+    def record_swap(self):
+        """
+        Add 1 to swap when method be called and return the current swaps.
+
+        SimplePlayer.record_swap(SimplePlayer) -> int
+        """
+        self._swap += 1
+        return self._swap
+    def get_swaps(self):
+        """
+        Return the number of swaps player made.
+
+        SimplePlayer.get_swaps(SimplePlayer) -> int
+        """
+        return self._swap
+    def reset_swaps(self):
+        self._swap = 0
 
 class SimpleStatusBar(tk.Frame):
+    """
+    Displayer the base information of player.
+    """
     def __init__(self, master):
+        """
+        Constructor(tk.Frame, SimpleTileApp)
+        """
         super().__init__(master)
         self._status = tk.Frame(self)
         self._status.pack(ipadx= 100)
@@ -144,58 +192,130 @@ class SimpleStatusBar(tk.Frame):
         self._swap.pack(side = tk.RIGHT)
 
     def set_score(self,score):
+        """
+        Set the score of status bar.
+
+        SimpleStatusBar.set_score(SimpleStatusBar, int)
+        """
         self._score.config(text = SCORE_FORMAT.format(score))
 
     def set_swap(self,swap):
+        """
+        Set the swap of status bar.
+
+        SimpleStatusBar.set_swap(SimpleStatusBar, int)
+        """
         self._swap.config(text = SWAPS_FORMAT.format('∞',swap))
 
 class Character(object):
+    """
+    Manage all the character in the game.
+    """
     def __init__(self,max_health):
+        """
+        Constructor(Character, int)
+        """
         self._max_health = max_health
         self._health = max_health
 
     def get_max_health(self):
+        """
+        Return the max health of an character.
+
+        Character.get_max_health(Character) -> int
+        """
         return self._max_health
 
     def get_health(self):
+        """
+        Return current health of an character.
+
+        Character.get_health(Character) -> int
+        """
         return self._health
 
     def lose_health(self, amount):
+        """
+        Make an character lose health.
+
+        Character.lose_health(Character, int)
+        """
         self._health -= amount
 
         if self._health < 0:
             self._health = 0
 
     def gain_health(self, amount):
+        """
+        Increase an character health.
+
+        Character.gain_health(Character, int)
+        """
         self._health += amount
 
         if self._health > self._max_health:
             self._health = self._max_health
 
     def reset_health(self):
+        """
+        Reset the character health to the max.
+
+        Character.reset_health(Character)
+        """
         self._health = self._max_health
 
 class Enemy(Character):
+    """
+    Manage the Enemy base info.
+    """
     def __init__(self, type, max_health, attack):
+        """
+        Constructor(Character, str, int, int)
+        """
         super().__init__(max_health)
         self._type = type
         self._attack = attack
 
     def set_attack(self,attack):
+        """
+        Set attack of Enemy.
+
+        Enemy.set_attackh(Character, int)
+        """
         self._attack = attack
         if self._attack[1]>300:
             self._attack[0] = 300
 
     def get_attack(self):
+        """
+        Return the attack value of Enemy.
+
+        Enemy.get_attack(Character) -> int
+        """
         return self._attack
 
     def set_type(self, type):
+        """
+        Set the type of Enemy.
+
+        Enemy.set_type(Character, str)
+        """
         self._type = type
 
     def get_type(self):
+        """
+        Return the type of Enemy.
+
+        Enemy.get_type(Character) -> str
+        """
         return self._type
 
     def attack(self):
+        """
+        Return a random value of damage Enemy may make.
+
+        Enemy.attackh(Character) -> int
+        """
         return random.randint(self._attack[0],self._attack[1])
 
 class Player(Character):
@@ -225,15 +345,18 @@ class Player(Character):
         for i in runs:
             tile = str(i[i.find_dominant_cell()])
             tile = tile[6:len(tile)-2]
-            damage = len(i)*i.get_max_dimension()*self._base_attack
+            damage = len(i) * i.get_max_dimension() * self._base_attack
             list1.append((tile,damage))
         return list1
 
 class VersusStatusBar(tk.Frame):
     """
-    Manage the statusbar.
+    Visualize the statusbar.
     """
     def __init__(self,master):
+        """
+        Constructor(tk.Frame, SinglePlayerTileApp)
+        """
         super().__init__(master)
         #Frame 1
         self._frame1 = tk.Frame(self)
@@ -279,22 +402,52 @@ class VersusStatusBar(tk.Frame):
         self._swaps.pack(ipadx = 20)
 
     def set_pmax(self, max):
+        """
+        Set Player's health to value max.
+
+        VersusStatusBar.set_pmax(tk.Frame, int)
+        """
         self._phmax = max
         
     def set_emax(self,max):
+        """
+        Set Enemy's health to value max.
+
+        VersusStatusBar.set_emax(tk.Frame, int)
+        """
         self._ehmax = max
 
     def set_swaps_per_turn(self,total):
+        """
+        Set the value of swaps can use per turn
+
+        VersusStatusBar.set_swaps_per_turn(tk.Frame, int)
+        """
         self._swaps_per_turn = total
 
     def set_swaps(self, swaps):
+        """
+        Set the value of swaps can make.
+
+        VersusStatusBar.set_swaps(tk.Frame, int)
+        """
         self._swaps.config(text = SWAPS_LEFT_FORMAT.format(\
             self._swaps_per_turn, swaps))
 
     def set_level(self, current):
+        """
+        Set the current level.
+
+        VersusStatusBar.set_level(tk.Frame, int)
+        """
         self._level.config(text = LEVEL_FORMAT.format(current))
 
     def set_ph(self, curnt_health):
+        """
+        Set the Player current health value.
+
+        VersusStatusBar.set_ph(tk.Frame, int)
+        """
         rest = self._phmax - curnt_health
         rest = (rest/self._phmax)*100
         self._phealth = curnt_health
@@ -313,6 +466,11 @@ class VersusStatusBar(tk.Frame):
             self._ph.config(bg = 'green')
 
     def set_eh(self, curnt_health):
+        """
+        Set the Enemy current health value.
+
+        VersusStatusBar.set_eh(tk.Frame, int)
+        """
         rest = self._ehmax - curnt_health
         rest = (rest/self._ehmax)*100
         self._ehealth = curnt_health
@@ -331,23 +489,33 @@ class VersusStatusBar(tk.Frame):
             self._eh.config(bg = 'red')
 
 class ImageTileGridView(TileGridView):
+    "Visualize the TileGrid."
     def __init__(self, master, grid, *args, width=GRID_WIDTH,
                  height=GRID_HEIGHT,
                  cell_width=GRID_CELL_WIDTH, cell_height=GRID_CELL_HEIGHT,
                  **kwargs):
+        """
+        Constructor(TileGridView, TileGrid, *, int, int, int, int, *)
+
+        :param master: The tkinter master widget/window.
+        :param width: Total width of the grid.
+        :param height: Total height of the grid.
+        :param cell_width: Width of each cell.
+        :param cell_height: Height of each cell.
+        """
         
-        self._light_sky_blue = tk.PhotoImage(file = 'light sky blue.gif')
-        self._purple = tk.PhotoImage(file = 'purple.gif')
-        self._gold = tk.PhotoImage(file = 'gold.gif')
-        self._green = tk.PhotoImage(file = 'green.gif')
-        self._blue = tk.PhotoImage(file = 'blue.gif')
-        self._red = tk.PhotoImage(file = 'red.gif')
-        self._light_sky_blues = tk.PhotoImage(file = 'light sky blues.gif')
-        self._purples = tk.PhotoImage(file = 'purples.gif')
-        self._golds = tk.PhotoImage(file = 'golds.gif')
-        self._greens = tk.PhotoImage(file = 'greens.gif')
-        self._blues = tk.PhotoImage(file = 'blues.gif')
-        self._reds = tk.PhotoImage(file = 'reds.gif')
+        self._light_sky_blue = tk.PhotoImage(file = './images/light sky blue.gif')
+        self._purple = tk.PhotoImage(file = './images/purple.gif')
+        self._gold = tk.PhotoImage(file = './images/gold.gif')
+        self._green = tk.PhotoImage(file = './images/green.gif')
+        self._blue = tk.PhotoImage(file = './images/blue.gif')
+        self._red = tk.PhotoImage(file = './images/red.gif')
+        self._light_sky_blues = tk.PhotoImage(file = './images/light sky blues.gif')
+        self._purples = tk.PhotoImage(file = './images/purples.gif')
+        self._golds = tk.PhotoImage(file = './images/golds.gif')
+        self._greens = tk.PhotoImage(file = './images/greens.gif')
+        self._blues = tk.PhotoImage(file = './images/blues.gif')
+        self._reds = tk.PhotoImage(file = './images/reds.gif')
         self._images = {'red':self._red,
                         'blue': self._blue,
                         'green':self._green,
@@ -374,15 +542,22 @@ class ImageTileGridView(TileGridView):
         TileGridView.undraw_tile_sprite(TileGridView, (int, int), Tile, bool)
                                                                     -> None"""
         colour = tile.get_colour()
-        #width, height = self._calculate_tile_size(xy_pos, selected)
         x, y = xy_pos
         if selected:
-            return self.create_image(x,y, image = self._images_selected[colour])
+            return self.create_image(x,y, 
+                                     image = self._images_selected[colour])
         else:
-            return self.create_image(x,y, image = self._images[colour])
+            return self.create_image(x,y, 
+                                     image = self._images[colour])
 
 class SinglePlayerTileApp(SimpleTileApp):
+    """
+    Visualize the entire game.
+    """
     def __init__(self,master):
+        """
+        Constructor(SinglePlayerTileApp, SimpleTileApp)
+        """
         self._master = master
         self._master.title('Tile Game - Level 1')
         self._game = SimpleGame()
@@ -410,18 +585,25 @@ class SinglePlayerTileApp(SimpleTileApp):
         filemenu.add_command(label="Exit", command=self.quit)
         self._statusbar = VersusStatusBar(self._master)
         self._statusbar.pack(side = tk.BOTTOM)
-        self._player = Player(PLAYER_BASE_HEALTH,SWAPS_PER_TURN,PLAYER_BASE_ATTACK)
+        self._player = Player(PLAYER_BASE_HEALTH,
+                              SWAPS_PER_TURN,
+                              PLAYER_BASE_ATTACK)
         self._statusbar.set_pmax(self._player.get_max_health())
         self._statusbar.set_ph(self._player.get_health())
         self._defender_type = list(TILE_PROBABILITIES)
-        self._enemy = Enemy(self._defender_type[random.randint(0,len(self._defender_type)-1)],
-                            ENEMY_BASE_HEALTH,(ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
+        self._enemy = Enemy(self._defender_type
+                            [random.randint(0,len(self._defender_type)-1)],
+                            ENEMY_BASE_HEALTH,
+                            (ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
         self._statusbar.set_emax(self._enemy.get_max_health())
         self._statusbar.set_eh(self._enemy.get_health())
 
-        self._player_image = tk.PhotoImage(file = 'player.gif')
-        self._canvas1.create_image(50,50,image = self._player_image)
-        self.image_enemy = self._canvas2.create_image(50,50,image = self._grid_view.return_image()[TILE_COLOURS[self._enemy.get_type()]])
+        self._player_image = tk.PhotoImage(file = './images/player.gif')
+        self._canvas1.create_image(50,50,
+                                   image = self._player_image)
+        self.image_enemy = self._canvas2.create_image(
+            50,50,image = self._grid_view.return_image()
+            [TILE_COLOURS[self._enemy.get_type()]])
 
         #base info
         self._level_count = 1
@@ -430,6 +612,9 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._statusbar.set_swaps(self._player.get_swaps())
 
     def die(self):
+        """
+        If Player die, reset all the entire game.
+        """
         messagebox.showinfo(title="Die!Die!Die!", message="You died!")
         self._game.reset()
         self._grid_view.draw()
@@ -437,21 +622,28 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._player.gain_health(self._player.get_max_health())
         self.set_player_h(self._player.get_health())
 
-        self._enemy.set_type(self._defender_type[random.randint(0,len(self._defender_type)-1)])
+        self._enemy.set_type(self._defender_type
+                             [random.randint(0,len(self._defender_type)-1)])
         self._enemy.gain_health(self._enemy.get_max_health())
         self.set_enemy_h(self._enemy.get_health())
 
         self._player.reset_swaps()
-        self._canvas2.itemconfig(self.image_enemy, image = self._grid_view.return_image()[TILE_COLOURS[self._enemy.get_type()]])
+        self._canvas2.itemconfig(self.image_enemy, image = 
+                                 self._grid_view.return_image()
+                                 [TILE_COLOURS[self._enemy.get_type()]])
         self._statusbar.set_swaps(self._player.get_swaps())
 
     def new_game(self):
+        """
+        Start a new game, reset all the entire game.
+        """
         ans = messagebox.askokcancel('New game', "Do you want to START a new game?")
         if ans:
             self._game.reset()
             self._grid_view.draw()
 
-            self._enemy.set_attack((ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
+            self._enemy.set_attack((ENEMY_ATTACK_DELTA,
+                                    ENEMY_BASE_ATTACK))
             self._level_count = 1
             self.refresh_level()
             self.base_attack = 3
@@ -459,45 +651,71 @@ class SinglePlayerTileApp(SimpleTileApp):
             self._player.gain_health(self._player.get_max_health())
             self.set_player_h(self._player.get_health())
 
-            self._enemy.set_type(self._defender_type[random.randint(0,len(self._defender_type)-1)])
+            self._enemy.set_type(self._defender_type
+                                 [random.randint(0,len(self._defender_type)-1)])
             self._enemy.gain_health(self._enemy.get_max_health())
             self.set_enemy_h(self._enemy.get_health())
 
             self._player.reset_swaps()
-            self._canvas2.itemconfig(self.image_enemy, image = self._grid_view.return_image()[TILE_COLOURS[self._enemy.get_type()]])
+            self._canvas2.itemconfig(self.image_enemy, image = 
+                                     self._grid_view.return_image()
+                                     [TILE_COLOURS[self._enemy.get_type()]])
             self._statusbar.set_swaps(self._player.get_swaps())
 
     def next_level(self):
-        messagebox.showinfo(title="Congratulation", message="Level Completed, move to next level")
+        """
+        Start next level.
+        """
+        messagebox.showinfo(title="Congratulation", 
+                            message="Level Completed, move to next level")
         self._level_count += 1
         self.refresh_level()
         self._game.reset()
         self._grid_view.draw()
         self.base_attack += 2
-        self._enemy.set_attack((self._enemy.get_attack()[0],self._enemy.get_attack()[1]+40))
+        self._enemy.set_attack(
+            (self._enemy.get_attack()[0],
+             self._enemy.get_attack()[1]+40))
 
         self._player.gain_health(self._player.get_max_health())
         self.set_player_h(self._player.get_health())
 
-        self._enemy.set_type(self._defender_type[random.randint(0,len(self._defender_type)-1)])
+        self._enemy.set_type(
+            self._defender_type[random.randint(0,len(self._defender_type)-1)])
         self._enemy.gain_health(self._enemy.get_max_health())
         self.set_enemy_h(self._enemy.get_health())
 
         self._player.reset_swaps()
-        self._canvas2.itemconfig(self.image_enemy, image = self._grid_view.return_image()[TILE_COLOURS[self._enemy.get_type()]])
+        self._canvas2.itemconfig(self.image_enemy, 
+                                 image = self._grid_view.return_image()
+                                 [TILE_COLOURS[self._enemy.get_type()]])
         self._statusbar.set_swaps(self._player.get_swaps())
 
     def set_enemy_h(self,health):
+        """
+        Set Enemy health to the status bar.
+        """
         self._statusbar.set_eh(health)
 
     def set_player_h(self,health):
+        """
+        Set Enemy health to the status bar.
+        """
         self._statusbar.set_ph(health)
 
     def refresh_level(self):
+        """
+        Refresh status bar of level.
+        """
         self._master.title('Tile Game - Level {}'.format(self._level_count))
         self._statusbar.set_level(self._level_count)
 
     def attack_player(self, damage):
+        """
+        Damage the player, if player health come to zero, Player die.
+
+        SinglePlayerTileApp.attack_player(SinglePlayerTileApp, int)
+        """
         self._player.lose_health(damage)
         self.set_player_h(self._player.get_health())
         if self._player.get_health() == 0:
@@ -515,6 +733,9 @@ class SinglePlayerTileApp(SimpleTileApp):
             self._statusbar.set_swaps(self._player.get_swaps())
 
     def _handle_runs(self, runs):
+        """
+        According to runs, damage the Enemy.
+        """
         score = 0
         for i in self._player.attack(runs,self._enemy.get_type()):
             if i[0] == self._enemy.get_type():
@@ -525,6 +746,92 @@ class SinglePlayerTileApp(SimpleTileApp):
         self.set_enemy_h(self._enemy.get_health())
         if self._enemy.get_health() == 0:
             self.next_level()
+
+class MultiPlayerTileApp(SimpleTileApp):
+    def __init__(self,master):
+        self._master = master
+        
+        self._game = SimpleGame()
+
+        #self._game.on('swap', self._handle_swap)
+        self._game.on('score', self._handle_score)
+
+        self._scorebar = ScoreBar(master)
+        self._scorebar.pack(side = tk.TOP)
+        self._score = Score(2000)
+        self._scorebar.update_bar(self._score.get_score())
+
+        self._grid_view = TileGridView(
+            master, self._game.get_grid(),
+            width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
+        self._grid_view.pack(expand=True, fill=tk.BOTH)
+
+        menubar = tk.Menu(self._master,tearoff = 0)
+        master.config(menu=menubar)
+        filemenu = tk.Menu(menubar)
+        menubar.add_cascade(label="File", menu=filemenu)
+
+        filemenu.add_command(label="New Game", command = self.new_game)
+        filemenu.add_command(label="Exit", command=self.quit)
+        self._bottom_frame = tk.Frame(master)
+        self._bottom_frame.pack(side = tk.BOTTOM)
+        self._ip_address = tk.Label(self._bottom_frame, text = "Local IP address: {}".format(self.get_local_ip()))
+        self._ip_address.pack()
+        
+
+        #Base info
+        self._time = 700
+        self._decrease_per_time = 50
+        #
+        #Net info
+
+        #
+        self.decrease()
+    def decrease(self):
+        """
+        Decrease the score per two seconds.
+        """
+        score = self._score.get_score() - self._decrease_per_time
+        self._score.set_score(score)
+        self._scorebar.update_bar((self._score.get_score())/2000*300)
+        print(self._score.get_score())
+        if self._score.get_score() > 0:
+            self._master.after(1000,self.decrease)
+        else:
+            #Action after die
+            pass
+    def _handle_score(self, score):
+        self._score.set_score(self._score.get_score()+score)
+        self._scorebar.update_bar((self._score.get_score())/2000*300)
+
+    #Net Part
+    def get_local_ip(self):
+        return socket.gethostbyname(socket.gethostname())
+
+class ScoreBar(tk.Frame):
+    def __init__(self,master):
+        super().__init__(master)
+        self._frame = tk.Frame(self)
+        self._frame.pack(expand = True, fill = tk.BOTH)
+        self._scorebar = tk.Canvas(self._frame, width = 300, height = 20)
+        self._scorebar.pack()
+        self._bar = self._scorebar.create_rectangle(0, 0, 300, 20, fill = 'green')
+    def update_bar(self,score):
+        self._scorebar.coords(self._bar, (0, 0, score, 20))
+
+class Score(object):
+    def __init__(self,score):
+        self._score = score
+        self._score_max = score
+    def get_score(self):
+        return self._score
+    def set_score(self, score):
+        if score > self._score_max:
+            self._score = self._score_max
+        elif score < 0:
+            self._score = 0
+        else:
+            self._score = score
 
 def task1():
     # Add task 1 GUI code here
@@ -539,11 +846,13 @@ def task2():
 
 def task3():
     # Add task 3 GUI code here
-    pass
+    root = tk.Tk()
+    app = MultiPlayerTileApp(root)
+    root.mainloop()
 
 def main():
     # Choose relevant task to run
-    task2()
+    task3()
 
 
 ################################################################################
