@@ -770,8 +770,6 @@ class MultiPlayerTileApp(SimpleTileApp):
         master.config(menu=menubar)
         filemenu = tk.Menu(menubar)
         menubar.add_cascade(label="File", menu=filemenu)
-
-        filemenu.add_command(label="Refresh", command = self.new_game)
         filemenu.add_command(label="Exit", command=self.quit)
 
         
@@ -782,21 +780,23 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._win = False
         self._level = 0
         #
-        
         if self._ans:
+            self.server()
+        else:
+            self.client()
         #Server part
+    def server(self):
             self._master.title("Server - Online")
             self._labeltop.config(text = "Connected")
             self._socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.bind(((''),self._port))
             self._socket.listen(1)
             self._tcpCliSock = None
-
-            self._bottom_frame = tk.Frame(master)
+            self._bottom_frame = tk.Frame(self._master)
             self._bottom_frame.pack(side = tk.BOTTOM)
             self.wait_client()
-        else:
         #Client part
+    def client(self):
             self._master.title("Client - Connected to {}".format(self._server_ip))
             self._tcpCliSock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._tcpCliSock.connect((str(self._server_ip),self._port))
@@ -823,11 +823,15 @@ class MultiPlayerTileApp(SimpleTileApp):
             print('receiving')
             try:
                 data = self._tcpCliSock.recv(1024)
+                if not data:
+                    self._labeltop.config(text = "Unconnected")
+                    messagebox.showinfo(title="Error", message="Connection lost.")
+                    self._master.destroy()
             except:
                 self._labeltop.config(text = "Unconnected")
-            print('received',data)
-            type(data)
-            print(data)
+                messagebox.showinfo(title="Error", message="Connection lost.")
+                self._master.destroy()
+            print('received')
             try:
                 if int(data) == 0:
                     self._win = True
@@ -849,9 +853,15 @@ class MultiPlayerTileApp(SimpleTileApp):
             print('receiving')
             try:
                 data = self._tcpCliSock.recv(1024)
+                if not data:
+                    self._labeltop.config(text = "Unconnected")
+                    messagebox.showinfo(title="Error", message="Connection lost.")
+                    self._master.destroy()
             except:
                 self._labeltop.config(text = "Lost connection to server")
-            print('received',data)
+                messagebox.showinfo(title="Error", message="Connection lost.")
+                self._master.destroy()
+            print('received')
             try:
                 if int(data) == 0:
                     self._win = True
@@ -892,9 +902,6 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._score.set_score(self._score.get_score()+score)
         self._scorebar.update_bar(self._score.get_score())
 
-    #Net Part
-    def get_local_ip(self):
-        return socket.gethostbyname(socket.gethostname())
 
 class ScoreBar(tk.Frame):
     def __init__(self,master):
@@ -972,7 +979,7 @@ def task3():
 
 def main():
     # Choose relevant task to run
-    task1()
+    task3()
 
 
 ################################################################################
