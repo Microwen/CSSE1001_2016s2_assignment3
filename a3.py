@@ -749,8 +749,14 @@ class SinglePlayerTileApp(SimpleTileApp):
 
 class MultiPlayerTileApp(SimpleTileApp):
     def __init__(self,master):
+
         self._ans = messagebox.askyesno('Server', "Start a game as Server[Yes] or Client[No]?")
-        
+        self._server_ip = None
+        if not self._ans:
+            self._server_ip = input('Please entre server IP address: ')
+            tk.Label(master, text = "Connected: {}".format(self._server_ip)).pack()
+        else:
+            tk.Label(master, text = "Local IP address: {}".format(self.get_local_ip())).pack()
         self._master = master
         
         self._game = SimpleGame()
@@ -781,12 +787,14 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._port = 12500
         self._win = False
         self._level = 0
+
         #
         
         if self._ans:
-        #Net info Server
-            self._master.title("Server")
-            messagebox.showinfo(title="IP Address", message="Local IP Address: {}".format(self.get_local_ip()))
+        #Server part
+            self._master.title("Server - Online {}".format(self.get_local_ip()))
+            messagebox.showinfo(title="IP Address", 
+                                message="Local IP Address: {}".format(self.get_local_ip()))
             self._socket=socket.socket()
             self._socket.bind((str(self.get_local_ip()),self._port))
             self._socket.listen(1)
@@ -794,18 +802,14 @@ class MultiPlayerTileApp(SimpleTileApp):
 
             self._bottom_frame = tk.Frame(master)
             self._bottom_frame.pack(side = tk.BOTTOM)
-            self._ip_address = tk.Label(self._bottom_frame, text = 
-                                        "Local IP address: {}   Port: {}".
-                                        format(self.get_local_ip(), self._port))
-            self._ip_address.pack()
             self.wait_client()
             #self._b = tk.Button(master, text = "Start", command = self.wait_client)
             #self._b.pack()
         else:
-        #Net info Client
-            self._master.title("Client")
+        #Client part
+            self._master.title("Client - Connected to {}".format(self._server_ip))
             self._tcpCliSock=socket.socket()
-            self._tcpCliSock.connect((str(self.get_local_ip()),self._port))
+            self._tcpCliSock.connect((str(self._server_ip),self._port))
             self.wait_client()
             print('connected')
 
@@ -825,7 +829,6 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._score.set_score(score)
         self._scorebar.update_bar(self._score.get_score())
         
-
         #Net Part
         if self._ans:
             print('/n receiving')
@@ -838,7 +841,8 @@ class MultiPlayerTileApp(SimpleTileApp):
                     self._tcpCliSock.close()
                 else:
                     print('sending')
-                    self._tcpCliSock.send(str(self._score.get_score()).encode(encoding='utf_8'))
+                    self._tcpCliSock.send(
+                        str(self._score.get_score()).encode(encoding='utf_8'))
                     print('sent', self._score.get_score())
                     self._scorebar.update_bar2(int(data))
                     self._level += 1
@@ -851,7 +855,8 @@ class MultiPlayerTileApp(SimpleTileApp):
                 pass
         else:
             print('sending')
-            self._tcpCliSock.send(str(self._score.get_score()).encode(encoding='utf_8'))
+            self._tcpCliSock.send(
+                str(self._score.get_score()).encode(encoding='utf_8'))
             print('sent', self._score.get_score())
             print('receiving')
             data = self._tcpCliSock.recv(1024)
@@ -859,7 +864,8 @@ class MultiPlayerTileApp(SimpleTileApp):
             try:
                 if int(data) == 0:
                     self._win = True
-                    messagebox.showinfo(title="Contragulation", message="You win")
+                    messagebox.showinfo(title="Contragulation", 
+                                        message="You win")
                     self._tcpCliSock.close()
                 self._scorebar.update_bar2(int(data))
                 self._level += 1
