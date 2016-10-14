@@ -24,7 +24,7 @@ from a3_support import *
 
 # Write your classes here (including import statements, etc.)
 from tkinter import messagebox
-import socket
+import socket, time
 class SimpleTileApp(object):
     def __init__(self, master):
         """
@@ -747,6 +747,30 @@ class SinglePlayerTileApp(SimpleTileApp):
         if self._enemy.get_health() == 0:
             self.next_level()
 
+class MultiTileGridView(TileGridView):
+    def __init__(self, master, grid, *args, width=GRID_WIDTH,
+                 height=GRID_HEIGHT,
+                 cell_width=GRID_CELL_WIDTH, cell_height=GRID_CELL_HEIGHT,
+                 **kwargs):
+        self._list_pos = []
+        self._list_cell = []
+        self._countp = 0
+        super().__init__(master, grid, *args, width=GRID_WIDTH,
+                 height=GRID_HEIGHT,
+                 cell_width=GRID_CELL_WIDTH, cell_height=GRID_CELL_HEIGHT,
+                 **kwargs)
+    def draw(self):
+        self.delete(tk.ALL)
+        for pos, cell in self._grid:
+            self._list_pos.append(pos)
+            self._list_cell.append(cell)
+        self.animation()
+    def animation(self):
+        if self._countp != len(self._list_pos):
+            self.redraw_tile(self._list_pos[self._countp], selected=False, tile=self._list_cell[self._countp])
+            self._countp+=1
+            self._master.after(15, self.animation)
+
 class MultiPlayerTileApp(SimpleTileApp):
     def __init__(self,master):
 
@@ -754,17 +778,18 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._server_ip = None
         if not self._ans:
             self._server_ip = input('Please entre server IP address: ')
-            tk.Label(master, text = "Connected: {}".format(self._server_ip)).pack()
+            self._labeltop = tk.Label(master, text = "Connected: {}".format(self._server_ip))
+            self._labeltop.pack()
         else:
-            tk.Label(master, text = "Local IP address: {}".format(self.get_local_ip())).pack()
+            self._labeltop = tk.Label(master, text = "Unnonnected")
+            self._labeltop.pack()
         self._master = master
-        
         self._game = SimpleGame()
 
         #self._game.on('swap', self._handle_swap)
         self._game.on('score', self._handle_score)
 
-        self._grid_view = TileGridView(
+        self._grid_view = MultiTileGridView(
             master, self._game.get_grid(),
             width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
         self._grid_view.pack()
@@ -777,42 +802,37 @@ class MultiPlayerTileApp(SimpleTileApp):
         filemenu = tk.Menu(menubar)
         menubar.add_cascade(label="File", menu=filemenu)
 
-        filemenu.add_command(label="New Game", command = self.new_game)
+        filemenu.add_command(label="Refresh", command = self.new_game)
         filemenu.add_command(label="Exit", command=self.quit)
 
         
         #Base info
         self._time = 1000
         self._decrease_per_time = 50
-        self._port = 12500
+        self._port = 1996
         self._win = False
         self._level = 0
-
         #
         
         if self._ans:
         #Server part
-            self._master.title("Server - Online {}".format(self.get_local_ip()))
-            messagebox.showinfo(title="IP Address", 
-                                message="Local IP Address: {}".format(self.get_local_ip()))
-            self._socket=socket.socket()
-            self._socket.bind((str(self.get_local_ip()),self._port))
+            self._master.title("Server - Online")
+            self._labeltop.config(text = "Connected")
+            self._socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.bind(((''),self._port))
             self._socket.listen(1)
             self._tcpCliSock = None
 
             self._bottom_frame = tk.Frame(master)
             self._bottom_frame.pack(side = tk.BOTTOM)
             self.wait_client()
-            #self._b = tk.Button(master, text = "Start", command = self.wait_client)
-            #self._b.pack()
         else:
         #Client part
             self._master.title("Client - Connected to {}".format(self._server_ip))
-            self._tcpCliSock=socket.socket()
+            self._tcpCliSock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._tcpCliSock.connect((str(self._server_ip),self._port))
             self.wait_client()
             print('connected')
-
 
     def wait_client(self):
         if self._ans:
@@ -831,9 +851,14 @@ class MultiPlayerTileApp(SimpleTileApp):
         
         #Net Part
         if self._ans:
-            print('/n receiving')
-            data = self._tcpCliSock.recv(1024)
+            print('receiving')
+            try:
+                data = self._tcpCliSock.recv(1024)
+            except:
+                self._labeltop.config(text = "Unconnected")
             print('received',data)
+            type(data)
+            print(data)
             try:
                 if int(data) == 0:
                     self._win = True
@@ -845,12 +870,6 @@ class MultiPlayerTileApp(SimpleTileApp):
                         str(self._score.get_score()).encode(encoding='utf_8'))
                     print('sent', self._score.get_score())
                     self._scorebar.update_bar2(int(data))
-                    self._level += 1
-                    if self._level > 10:
-                        self._time = 800
-                    elif self._level > 20:
-                        self._decrease_per_time = 70
-
             except:
                 pass
         else:
@@ -859,7 +878,10 @@ class MultiPlayerTileApp(SimpleTileApp):
                 str(self._score.get_score()).encode(encoding='utf_8'))
             print('sent', self._score.get_score())
             print('receiving')
-            data = self._tcpCliSock.recv(1024)
+            try:
+                data = self._tcpCliSock.recv(1024)
+            except:
+                self._labeltop.config(text = "Lost connection to server")
             print('received',data)
             try:
                 if int(data) == 0:
@@ -868,13 +890,18 @@ class MultiPlayerTileApp(SimpleTileApp):
                                         message="You win")
                     self._tcpCliSock.close()
                 self._scorebar.update_bar2(int(data))
-                self._level += 1
-                if self._level > 10:
-                        self._time = 800
-                elif self._level > 20:
-                        self._decrease_per_time = 70
             except:
                 pass
+        self._level += 1
+        if self._level == 10:
+            self._time = 800
+        elif self._level == 20:
+            self._decrease_per_time = 80
+        elif self._level == 40:
+            self._decrease_per_time = 120
+        elif self._level == 60:
+            self._decrease_per_time = 200
+
         if int(self._score.get_score()) > int(self._scorebar.get_escore()):
             self._scorebar.config_canvas('winning')
         elif int(self._score.get_score()) < int(self._scorebar.get_escore()):
