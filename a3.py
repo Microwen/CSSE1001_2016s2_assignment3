@@ -188,7 +188,7 @@ class SimpleStatusBar(tk.Frame):
         self._score = tk.Label(self._status, text = SCORE_FORMAT.format(0))
         self._score.pack(side = tk.LEFT)
 
-        self._swap = tk.Label(self._status, text = SWAPS_FORMAT.format('∞',0))
+        self._swap = tk.Label(self._status, text = "Swap {} made".format(0))
         self._swap.pack(side = tk.RIGHT)
 
     def set_score(self,score):
@@ -205,7 +205,7 @@ class SimpleStatusBar(tk.Frame):
 
         SimpleStatusBar.set_swap(SimpleStatusBar, int)
         """
-        self._swap.config(text = SWAPS_FORMAT.format('∞',swap))
+        self._swap.config(text = "Swap {} made".format(swap))
 
 class Character(object):
     """
@@ -379,10 +379,9 @@ class VersusStatusBar(tk.Frame):
             HEALTH_FORMAT.format(int(self._phealth)))
         self.text_ph.pack(side = tk.LEFT, pady = 5)
         #Player health bar
-        self._ph = tk.Label(self._phframe, bg = 'green')
-        self._ph.pack(side = tk.LEFT, ipadx = 100, pady = 5)
-        self._phrest = tk.Label(self._phframe, bg = 'green')
-        self._phrest.pack(side = tk.LEFT, ipadx = 0, pady = 5)
+        self._ph = tk.Canvas(self._phframe, width = 100, height = 20)
+        self._ph.pack(side = tk.LEFT)
+        self._phbar = self._ph.create_rectangle(0,0,100,20, fill = 'green')
         #RHS Frame
         self._ehframe = tk.Frame(self._frame2)
         self._ehframe.pack(side = tk.RIGHT, fill = tk.BOTH, expand = 1)
@@ -391,10 +390,9 @@ class VersusStatusBar(tk.Frame):
             HEALTH_FORMAT.format(int(self._ehealth)))
         self.text_eh.pack(side = tk.RIGHT, pady = 5)
         #Enemy health bar
-        self._eh = tk.Label(self._ehframe, bg = 'red')
-        self._eh.pack(side = tk.RIGHT,ipadx = 100, pady = 5)
-        self._ehrest = tk.Label(self._ehframe, bg = 'red')
-        self._ehrest.pack(side = tk.RIGHT,ipadx = 0, pady = 5)
+        self._eh = tk.Canvas(self._ehframe, width = 100, height = 20)
+        self._eh.pack(side = tk.RIGHT)
+        self._ehbar = self._eh.create_rectangle(0,0,100,20, fill = 'red')
         #Swaps info
         self._swaps_per_turn = None
         self._swaps = tk.Label(self._frame2, text = SWAPS_LEFT_FORMAT.format(\
@@ -449,21 +447,11 @@ class VersusStatusBar(tk.Frame):
         VersusStatusBar.set_ph(tk.Frame, int)
         """
         rest = self._phmax - curnt_health
-        rest = (rest/self._phmax)*100
-        self._phealth = curnt_health
-        health = 100 - rest
+        rest = (curnt_health/self._phmax)*100
+        self._phealth = int(curnt_health)
         #base info above
-        self.text_ph.config(text = HEALTH_FORMAT.format(int(self._phealth)))
-        self._ph.pack(side = tk.LEFT, ipadx = health, pady = 5)
-        self._phrest.pack(side = tk.LEFT, ipadx = rest, pady = 5)
-        if rest == 0:
-            self._phrest.config(bg = 'green')
-        else:
-            self._phrest.config(bg = 'grey')
-        if health == 0:
-            self._ph.config(bg = 'grey')
-        else:
-            self._ph.config(bg = 'green')
+        self.text_ph.config(text = self._phealth)
+        self._ph.coords(self._phbar,(0,0,rest,20))
 
     def set_eh(self, curnt_health):
         """
@@ -472,21 +460,11 @@ class VersusStatusBar(tk.Frame):
         VersusStatusBar.set_eh(tk.Frame, int)
         """
         rest = self._ehmax - curnt_health
-        rest = (rest/self._ehmax)*100
-        self._ehealth = curnt_health
-        health = 100 - rest
+        rest = (curnt_health/self._phmax)*100
+        self._ehealth = int(curnt_health)
         #base info above
-        self.text_eh.config(text = HEALTH_FORMAT.format(int(self._ehealth)))
-        self._eh.pack(side = tk.RIGHT, ipadx = health, pady = 5)
-        self._ehrest.pack(side = tk.RIGHT, ipadx = rest, pady = 5)
-        if rest == 0:
-            self._ehrest.config(bg = 'red')
-        else:
-            self._ehrest.config(bg = 'grey')
-        if health == 0:
-            self._eh.config(bg = 'grey')
-        else:
-            self._eh.config(bg = 'red')
+        self.text_eh.config(text = self._ehealth)
+        self._eh.coords(self._ehbar,(0,0,rest,20))
 
 class ImageTileGridView(TileGridView):
     "Visualize the TileGrid."
@@ -494,16 +472,7 @@ class ImageTileGridView(TileGridView):
                  height=GRID_HEIGHT,
                  cell_width=GRID_CELL_WIDTH, cell_height=GRID_CELL_HEIGHT,
                  **kwargs):
-        """
-        Constructor(TileGridView, TileGrid, *, int, int, int, int, *)
 
-        :param master: The tkinter master widget/window.
-        :param width: Total width of the grid.
-        :param height: Total height of the grid.
-        :param cell_width: Width of each cell.
-        :param cell_height: Height of each cell.
-        """
-        
         self._light_sky_blue = tk.PhotoImage(file = './images/light sky blue.gif')
         self._purple = tk.PhotoImage(file = './images/purple.gif')
         self._gold = tk.PhotoImage(file = './images/gold.gif')
@@ -747,7 +716,7 @@ class SinglePlayerTileApp(SimpleTileApp):
         if self._enemy.get_health() == 0:
             self.next_level()
 
-class MultiTileGridView(TileGridView):
+class MultiTileGridView(ImageTileGridView):
     def __init__(self, master, grid, *args, width=GRID_WIDTH,
                  height=GRID_HEIGHT,
                  cell_width=GRID_CELL_WIDTH, cell_height=GRID_CELL_HEIGHT,
@@ -774,7 +743,7 @@ class MultiTileGridView(TileGridView):
 class MultiPlayerTileApp(SimpleTileApp):
     def __init__(self,master):
 
-        self._ans = messagebox.askyesno('Server', "Start a game as Server[Yes] or Client[No]?")
+        self._ans = messagebox.askyesno('Server', "Play game as Server [Yes] or Client [No]?")
         self._server_ip = None
         if not self._ans:
             self._server_ip = input('Please entre server IP address: ')
@@ -1003,7 +972,7 @@ def task3():
 
 def main():
     # Choose relevant task to run
-    task3()
+    task1()
 
 
 ################################################################################
