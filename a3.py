@@ -24,7 +24,7 @@ from a3_support import *
 
 # Write your classes here (including import statements, etc.)
 from tkinter import messagebox
-import socket, time
+import socket
 class SimpleTileApp(object):
     def __init__(self, master):
         """
@@ -749,6 +749,8 @@ class SinglePlayerTileApp(SimpleTileApp):
 
 class MultiPlayerTileApp(SimpleTileApp):
     def __init__(self,master):
+        self._ans = messagebox.askyesno('Server', "Start a game as Server[Yes] or Client[No]?")
+        
         self._master = master
         
         self._game = SimpleGame()
@@ -756,16 +758,14 @@ class MultiPlayerTileApp(SimpleTileApp):
         #self._game.on('swap', self._handle_swap)
         self._game.on('score', self._handle_score)
 
+        self._grid_view = TileGridView(
+            master, self._game.get_grid(),
+            width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
+        self._grid_view.pack()
         self._scorebar = ScoreBar(master)
         self._scorebar.pack(side = tk.TOP)
         self._score = Score(2000)
         self._scorebar.update_bar(self._score.get_score())
-
-        self._grid_view = TileGridView(
-            master, self._game.get_grid(),
-            width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
-        self._grid_view.pack(expand=True, fill=tk.BOTH)
-
         menubar = tk.Menu(self._master,tearoff = 0)
         master.config(menu=menubar)
         filemenu = tk.Menu(menubar)
@@ -773,36 +773,122 @@ class MultiPlayerTileApp(SimpleTileApp):
 
         filemenu.add_command(label="New Game", command = self.new_game)
         filemenu.add_command(label="Exit", command=self.quit)
-        self._bottom_frame = tk.Frame(master)
-        self._bottom_frame.pack(side = tk.BOTTOM)
-        self._ip_address = tk.Label(self._bottom_frame, text = "Local IP address: {}".format(self.get_local_ip()))
-        self._ip_address.pack()
+
         
-
         #Base info
-        self._time = 700
+        self._time = 1000
         self._decrease_per_time = 50
+        self._port = 12500
+        self._win = False
+        self._level = 0
         #
-        #Net info
+        
+        if self._ans:
+        #Net info Server
+            self._master.title("Server")
+            messagebox.showinfo(title="IP Address", message="Local IP Address: {}".format(self.get_local_ip()))
+            self._socket=socket.socket()
+            self._socket.bind((str(self.get_local_ip()),self._port))
+            self._socket.listen(1)
+            self._tcpCliSock = None
 
-        #
+            self._bottom_frame = tk.Frame(master)
+            self._bottom_frame.pack(side = tk.BOTTOM)
+            self._ip_address = tk.Label(self._bottom_frame, text = 
+                                        "Local IP address: {}   Port: {}".
+                                        format(self.get_local_ip(), self._port))
+            self._ip_address.pack()
+            self.wait_client()
+            #self._b = tk.Button(master, text = "Start", command = self.wait_client)
+            #self._b.pack()
+        else:
+        #Net info Client
+            self._master.title("Client")
+            self._tcpCliSock=socket.socket()
+            self._tcpCliSock.connect((str(self.get_local_ip()),self._port))
+            self.wait_client()
+            print('connected')
+
+
+    def wait_client(self):
+        if self._ans:
+            print('waiting for connection...')
+            self._tcpCliSock, addr = self._socket.accept()
+            print('...connected from:', addr)
         self.decrease()
+
     def decrease(self):
         """
         Decrease the score per two seconds.
         """
         score = self._score.get_score() - self._decrease_per_time
         self._score.set_score(score)
-        self._scorebar.update_bar((self._score.get_score())/2000*300)
-        print(self._score.get_score())
-        if self._score.get_score() > 0:
-            self._master.after(1000,self.decrease)
+        self._scorebar.update_bar(self._score.get_score())
+        
+
+        #Net Part
+        if self._ans:
+            print('/n receiving')
+            data = self._tcpCliSock.recv(1024)
+            print('received',data)
+            try:
+                if int(data) == 0:
+                    self._win = True
+                    messagebox.showinfo(title="Contragulation", message="You win")
+                    self._tcpCliSock.close()
+                else:
+                    print('sending')
+                    self._tcpCliSock.send(str(self._score.get_score()).encode(encoding='utf_8'))
+                    print('sent', self._score.get_score())
+                    self._scorebar.update_bar2(int(data))
+                    self._level += 1
+                    if self._level > 10:
+                        self._time = 800
+                    elif self._level > 20:
+                        self._decrease_per_time = 70
+
+            except:
+                pass
         else:
-            #Action after die
-            pass
+            print('sending')
+            self._tcpCliSock.send(str(self._score.get_score()).encode(encoding='utf_8'))
+            print('sent', self._score.get_score())
+            print('receiving')
+            data = self._tcpCliSock.recv(1024)
+            print('received',data)
+            try:
+                if int(data) == 0:
+                    self._win = True
+                    messagebox.showinfo(title="Contragulation", message="You win")
+                    self._tcpCliSock.close()
+                self._scorebar.update_bar2(int(data))
+                self._level += 1
+                if self._level > 10:
+                        self._time = 800
+                elif self._level > 20:
+                        self._decrease_per_time = 70
+            except:
+                pass
+        if int(self._score.get_score()) > int(self._scorebar.get_escore()):
+            self._scorebar.config_canvas('winning')
+        elif int(self._score.get_score()) < int(self._scorebar.get_escore()):
+            self._scorebar.config_canvas('losing')
+        else:
+            self._scorebar.config_canvas('equal')
+        #
+        if self._score.get_score() > 0:
+            if self._win:
+                pass
+            else:
+                self._master.after(self._time,self.decrease)
+        else:
+            messagebox.showinfo(title="Sorry", message="You lose")
+            self._tcpCliSock.send(str(0).encode(encoding='utf_8'))
+            self._tcpCliSock.close()
+
     def _handle_score(self, score):
         self._score.set_score(self._score.get_score()+score)
-        self._scorebar.update_bar((self._score.get_score())/2000*300)
+        self._scorebar.update_bar(self._score.get_score())
 
     #Net Part
     def get_local_ip(self):
@@ -811,13 +897,45 @@ class MultiPlayerTileApp(SimpleTileApp):
 class ScoreBar(tk.Frame):
     def __init__(self,master):
         super().__init__(master)
+        self._winning = tk.PhotoImage(file = './images/winning.gif')
+        self._equal = tk.PhotoImage(file = './images/equal.gif')
+        self._losing = tk.PhotoImage(file = './images/losing.gif')
+        self._dic = {'winning':self._winning,
+                     'equal':self._equal,
+                     'losing':self._losing}
+        self._frame1 = tk.Frame(self)
+        self._frame1.pack(expand = True, fill = tk.BOTH)
+        self._label1 = tk.Label(self._frame1, text = "You", fg="green")
+        self._label1.pack(side = tk.LEFT)
+        self._label2 = tk.Label(self._frame1, text = "Enemy", fg="red")
+        self._label2.pack(side = tk.RIGHT)
         self._frame = tk.Frame(self)
         self._frame.pack(expand = True, fill = tk.BOTH)
         self._scorebar = tk.Canvas(self._frame, width = 300, height = 20)
-        self._scorebar.pack()
+        self._scorebar.pack(side = tk.LEFT)
+        self._canvas = tk.Canvas(self, width = 100, height = 100)
+        self._canvas.pack(side = tk.BOTTOM)
+        self._status = self._canvas.create_image(50,50,image =self._equal)
         self._bar = self._scorebar.create_rectangle(0, 0, 300, 20, fill = 'green')
+        self._scorebar2 = tk.Canvas(self._frame, width = 300, height = 20)
+        self._scorebar2.pack(side = tk.RIGHT)
+        self._bar2 = self._scorebar2.create_rectangle(0, 0, 300, 20, fill = 'red')
+        self._score = None
+
+    def config_canvas(self, status):
+        self._canvas.itemconfig(self._status, image = self._dic[status])
+
     def update_bar(self,score):
+        score = score/2000*300
         self._scorebar.coords(self._bar, (0, 0, score, 20))
+
+    def update_bar2(self, score):
+        score = score
+        self._score = score
+        self._scorebar2.coords(self._bar2, (0, 0, score/2000*300, 20))
+
+    def get_escore(self):
+        return self._score
 
 class Score(object):
     def __init__(self,score):
