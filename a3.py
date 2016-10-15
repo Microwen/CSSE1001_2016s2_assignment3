@@ -360,7 +360,7 @@ class VersusStatusBar(tk.Frame):
         super().__init__(master)
         #Frame 1
         self._frame1 = tk.Frame(self)
-        self._frame1.pack(side = tk.TOP)
+        self._frame1.pack(side = tk.TOP, expand = True, fill = tk.BOTH)
         self._level = tk.Label(self._frame1, text = LEVEL_FORMAT.format(1))
         self._level.pack()
         #Player and enemy health
@@ -371,31 +371,25 @@ class VersusStatusBar(tk.Frame):
         #Frame 2
         self._frame2 = tk.Frame(master,pady = 20)
         self._frame2.pack(side = tk.BOTTOM, fill = tk.BOTH)
-        #LHS Frame
-        self._phframe = tk.Frame(self._frame2)
-        self._phframe.pack(side = tk.LEFT, fill = tk.BOTH, expand = 1)
         #Player health info
-        self.text_ph = tk.Label(self._phframe, text = \
+        self.text_ph = tk.Label(self._frame1, text = \
             HEALTH_FORMAT.format(int(self._phealth)))
         self.text_ph.pack(side = tk.LEFT, pady = 5)
         #Player health bar
-        self._ph = tk.Canvas(self._phframe, width = 100, height = 20)
+        self._ph = tk.Canvas(self._frame1, width = 200, height = 20)
         self._ph.pack(side = tk.LEFT)
         self._phbar = self._ph.create_rectangle(0,0,100,20, fill = 'green')
-        #RHS Frame
-        self._ehframe = tk.Frame(self._frame2)
-        self._ehframe.pack(side = tk.RIGHT, fill = tk.BOTH, expand = 1)
         #Enemy health info
-        self.text_eh = tk.Label(self._ehframe, text = \
+        self.text_eh = tk.Label(self._frame1, text = \
             HEALTH_FORMAT.format(int(self._ehealth)))
         self.text_eh.pack(side = tk.RIGHT, pady = 5)
         #Enemy health bar
-        self._eh = tk.Canvas(self._ehframe, width = 100, height = 20)
+        self._eh = tk.Canvas(self._frame1, width = 200, height = 20)
         self._eh.pack(side = tk.RIGHT)
         self._ehbar = self._eh.create_rectangle(0,0,100,20, fill = 'red')
         #Swaps info
         self._swaps_per_turn = None
-        self._swaps = tk.Label(self._frame2, text = SWAPS_LEFT_FORMAT.format(\
+        self._swaps = tk.Label(self._frame1, text = SWAPS_LEFT_FORMAT.format(\
             self._swaps_per_turn, self._swaps_per_turn))
         self._swaps.pack(ipadx = 20)
 
@@ -447,7 +441,7 @@ class VersusStatusBar(tk.Frame):
         VersusStatusBar.set_ph(tk.Frame, int)
         """
         rest = self._phmax - curnt_health
-        rest = (curnt_health/self._phmax)*100
+        rest = (curnt_health/self._phmax)*200
         self._phealth = int(curnt_health)
         #base info above
         self.text_ph.config(text = self._phealth)
@@ -460,11 +454,11 @@ class VersusStatusBar(tk.Frame):
         VersusStatusBar.set_eh(tk.Frame, int)
         """
         rest = self._ehmax - curnt_health
-        rest = (curnt_health/self._phmax)*100
+        rest = (curnt_health/self._phmax)*200
         self._ehealth = int(curnt_health)
         #base info above
         self.text_eh.config(text = self._ehealth)
-        self._eh.coords(self._ehbar,(0,0,rest,20))
+        self._eh.coords(self._ehbar,(200-rest,0,200,20))
 
 class ImageTileGridView(TileGridView):
     "Visualize the TileGrid."
@@ -534,17 +528,23 @@ class SinglePlayerTileApp(SimpleTileApp):
 
         self._game.on('swap', self._handle_swap)
         self._game.on('run', self._handle_runs)
-
+        self._statusbar = VersusStatusBar(self._master)
+        self._statusbar.pack(side = tk.TOP)
+        self._centre = tk.Frame(master)
+        self._centre.pack(expand = True, fill = tk.BOTH)
+        self._lhs = tk.Frame(self._centre)
+        self._lhs.pack(side = tk.LEFT)
+        self._canvas1 = tk.Canvas(self._lhs, width = 100, height = 100)
+        self._canvas1.pack(side = tk.TOP)
+        self._rhs = tk.Frame(self._centre)
+        self._rhs.pack(side = tk.RIGHT)
+        self._canvas2 = tk.Canvas(self._rhs, width = 100, height = 100)
+        self._canvas2.pack(side = tk.TOP)
         self._grid_view = ImageTileGridView(
-            master, self._game.get_grid(),
+            self._centre, self._game.get_grid(),
             width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
-        self._grid_view.pack(side=tk.TOP)
+        self._grid_view.pack(expand = True, fill = tk.BOTH)
 
-
-        self._canvas1 = tk.Canvas(master,width = 100, height = 100)
-        self._canvas1.pack(side = tk.LEFT)
-        self._canvas2 = tk.Canvas(master,width = 100, height = 100)
-        self._canvas2.pack(side = tk.RIGHT)
 
         menubar = tk.Menu(self._master,tearoff = 0)
         master.config(menu=menubar)
@@ -553,8 +553,6 @@ class SinglePlayerTileApp(SimpleTileApp):
 
         filemenu.add_command(label="New Game", command = self.new_game)
         filemenu.add_command(label="Exit", command=self.quit)
-        self._statusbar = VersusStatusBar(self._master)
-        self._statusbar.pack(side = tk.BOTTOM)
         self._player = Player(PLAYER_BASE_HEALTH,
                               SWAPS_PER_TURN,
                               PLAYER_BASE_ATTACK)
@@ -567,10 +565,13 @@ class SinglePlayerTileApp(SimpleTileApp):
                             (ENEMY_ATTACK_DELTA,ENEMY_BASE_ATTACK))
         self._statusbar.set_emax(self._enemy.get_max_health())
         self._statusbar.set_eh(self._enemy.get_health())
-
         self._player_image = tk.PhotoImage(file = './images/player.gif')
         self._canvas1.create_image(50,50,
                                    image = self._player_image)
+        self._pn = tk.Label(self._lhs, text = 'Peter', fg = 'green')
+        self._pn.pack(side = tk.BOTTOM)
+        self._en = tk.Label(self._rhs, text = 'None', fg = 'red')
+        self._en.pack(side = tk.BOTTOM)
         self.image_enemy = self._canvas2.create_image(
             50,50,image = self._grid_view.return_image()
             [TILE_COLOURS[self._enemy.get_type()]])
@@ -580,7 +581,14 @@ class SinglePlayerTileApp(SimpleTileApp):
         self.base_attack = 3
         self._statusbar.set_swaps_per_turn(self._player.get_swaps_per_turn())
         self._statusbar.set_swaps(self._player.get_swaps())
-
+        self._index = {
+            'fire': 'Sena',
+            'poison': 'Shindou Ai',
+            'water': 'Brilliant Comrade',
+            'coin': 'Yozora',
+            'psychic': 'Great UQ',
+            'ice': 'L.Rabbit'}
+        self._en.config(text = self._index[self._enemy.get_type()])
     def die(self):
         """
         If Player die, reset all the entire game.
@@ -601,6 +609,7 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._canvas2.itemconfig(self.image_enemy, image = 
                                  self._grid_view.return_image()
                                  [TILE_COLOURS[self._enemy.get_type()]])
+        self._en.config(text = self._index[self._enemy.get_type()])
         self._statusbar.set_swaps(self._player.get_swaps())
 
     def new_game(self):
@@ -630,6 +639,7 @@ class SinglePlayerTileApp(SimpleTileApp):
             self._canvas2.itemconfig(self.image_enemy, image = 
                                      self._grid_view.return_image()
                                      [TILE_COLOURS[self._enemy.get_type()]])
+            self._en.config(text = self._index[self._enemy.get_type()])
             self._statusbar.set_swaps(self._player.get_swaps())
 
     def next_level(self):
@@ -659,6 +669,7 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._canvas2.itemconfig(self.image_enemy, 
                                  image = self._grid_view.return_image()
                                  [TILE_COLOURS[self._enemy.get_type()]])
+        self._en.config(text = self._index[self._enemy.get_type()])
         self._statusbar.set_swaps(self._player.get_swaps())
 
     def set_enemy_h(self,health):
@@ -1058,7 +1069,7 @@ def task3():
 
 def main():
     # Choose relevant task to run
-    task3()
+    task2()
 
 
 ################################################################################
