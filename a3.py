@@ -511,6 +511,7 @@ class ImageTileGridView(TileGridView):
         TileGridView.undraw_tile_sprite(TileGridView, (int, int), Tile, bool)
                                                                     -> None"""
         colour = tile.get_colour()
+
         x, y = xy_pos
         if selected:
             return self.create_image(x,y, 
@@ -734,6 +735,7 @@ class MultiTileGridView(ImageTileGridView):
             self._list_pos.append(pos)
             self._list_cell.append(cell)
         self.animation()
+
     def animation(self):
         if self._countp != len(self._list_pos):
             self.redraw_tile(self._list_pos[self._countp], selected=False, tile=self._list_cell[self._countp])
@@ -757,9 +759,10 @@ class MultiPlayerTileApp(SimpleTileApp):
 
         #self._game.on('swap', self._handle_swap)
         self._game.on('score', self._handle_score)
-
+        self._frame = tk.Frame(master)
+        self._frame.pack()
         self._grid_view = MultiTileGridView(
-            master, self._game.get_grid(),
+            self._frame, self._game.get_grid(),
             width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
         self._grid_view.pack()
         self._scorebar = ScoreBar(master)
@@ -772,18 +775,38 @@ class MultiPlayerTileApp(SimpleTileApp):
         menubar.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="Exit", command=self.quit)
 
-        
         #Base info
         self._time = 1000
         self._decrease_per_time = 50
         self._port = 1996
         self._win = False
         self._level = 0
+        self._ready = False
+        self._colour = {(1, 2): None, (3, 2): None, (0, 0): None, (5, 0): None, 
+                         (3, 0): None, (0, 4): None, (5, 4): None, (1, 4): None, 
+                         (5, 5): None, (1, 3): None, (0, 5): None, (2, 1): None, 
+                         (5, 1): None, (4, 2): None, (2, 5): None, (1, 0): None, 
+                         (3, 5): None, (0, 1): None, (5, 3): None, (4, 1): None, 
+                         (0, 2): None, (3, 3): None, (1, 5): None, (3, 4): None, 
+                         (3, 1): None, (5, 2): None, (4, 4): None, (1, 1): None, 
+                         (2, 0): None, (4, 3): None, (2, 2): None, (4, 5): None, 
+                         (2, 3): None, (4, 0): None, (0, 3): None, (2, 4): None}
         #
         if self._ans:
             self.server()
         else:
             self.client()
+
+    def reset_colour(self):
+        self._colour = {(1, 2): None, (3, 2): None, (0, 0): None, (5, 0): None, 
+                         (3, 0): None, (0, 4): None, (5, 4): None, (1, 4): None, 
+                         (5, 5): None, (1, 3): None, (0, 5): None, (2, 1): None, 
+                         (5, 1): None, (4, 2): None, (2, 5): None, (1, 0): None, 
+                         (3, 5): None, (0, 1): None, (5, 3): None, (4, 1): None, 
+                         (0, 2): None, (3, 3): None, (1, 5): None, (3, 4): None, 
+                         (3, 1): None, (5, 2): None, (4, 4): None, (1, 1): None, 
+                         (2, 0): None, (4, 3): None, (2, 2): None, (4, 5): None, 
+                         (2, 3): None, (4, 0): None, (0, 3): None, (2, 4): None}
         #Server part
     def server(self):
             self._master.title("Server - Online")
@@ -817,7 +840,9 @@ class MultiPlayerTileApp(SimpleTileApp):
         score = self._score.get_score() - self._decrease_per_time
         self._score.set_score(score)
         self._scorebar.update_bar(self._score.get_score())
-        
+        if not self._ready:
+            messagebox.showinfo(title="Ready", message="Are you Ready?")
+            self._ready = not self._ready
         #Net Part
         if self._ans:
             print('receiving')
@@ -827,7 +852,17 @@ class MultiPlayerTileApp(SimpleTileApp):
                     self._labeltop.config(text = "Unconnected")
                     messagebox.showinfo(title="Error", message="Connection lost.")
                     self._master.destroy()
+                dict1 = {}
+                dict1 = eval(data)
+                data = int(dict1['score'])
+                del dict1['score']
+                #
+                #
+                #
+                #
+
             except:
+                raise Exception
                 self._labeltop.config(text = "Unconnected")
                 messagebox.showinfo(title="Error", message="Connection lost.")
                 self._master.destroy()
@@ -838,17 +873,35 @@ class MultiPlayerTileApp(SimpleTileApp):
                     messagebox.showinfo(title="Contragulation", message="You win")
                     self._tcpCliSock.close()
                 else:
+                    self.reset_colour()
+                    for i in self._game.get_grid():
+                        i = str(i)
+                        if (int(i[2]),int(i[5])) in (self._colour):
+                            self._colour[(int(i[2]),int(i[5]))] = i[15:-2]
+
+                    self._colour["score"] = self._score.get_score()
+                    self._colour = str(self._colour)
+
                     print('sending')
                     self._tcpCliSock.send(
-                        str(self._score.get_score()).encode(encoding='utf_8'))
+                        str(self._colour).encode(encoding='utf_8'))
                     print('sent', self._score.get_score())
                     self._scorebar.update_bar2(int(data))
             except:
-                pass
+                raise Exception
         else:
+            self.reset_colour()
+            for i in self._game.get_grid():
+                i = str(i)
+                if (int(i[2]),int(i[5])) in (self._colour):
+                    self._colour[(int(i[2]),int(i[5]))] = i[15:-2]
+
+            self._colour["score"] = self._score.get_score()
+            self._colour = str(self._colour)
+
             print('sending')
             self._tcpCliSock.send(
-                str(self._score.get_score()).encode(encoding='utf_8'))
+                str(self._colour).encode(encoding='utf_8'))
             print('sent', self._score.get_score())
             print('receiving')
             try:
@@ -857,7 +910,18 @@ class MultiPlayerTileApp(SimpleTileApp):
                     self._labeltop.config(text = "Unconnected")
                     messagebox.showinfo(title="Error", message="Connection lost.")
                     self._master.destroy()
+
+                dict1 = {}
+                dict1 = eval(data)
+                data = int(dict1['score'])
+                del dict1['score']
+                #
+                #
+                #
+                #
+
             except:
+                raise Exception
                 self._labeltop.config(text = "Lost connection to server")
                 messagebox.showinfo(title="Error", message="Connection lost.")
                 self._master.destroy()
@@ -870,7 +934,7 @@ class MultiPlayerTileApp(SimpleTileApp):
                     self._tcpCliSock.close()
                 self._scorebar.update_bar2(int(data))
             except:
-                pass
+                raise Exception
         self._level += 1
         if self._level == 10:
             self._time = 800
@@ -880,7 +944,6 @@ class MultiPlayerTileApp(SimpleTileApp):
             self._decrease_per_time = 120
         elif self._level == 60:
             self._decrease_per_time = 200
-
         if int(self._score.get_score()) > int(self._scorebar.get_escore()):
             self._scorebar.config_canvas('winning')
         elif int(self._score.get_score()) < int(self._scorebar.get_escore()):
@@ -901,7 +964,6 @@ class MultiPlayerTileApp(SimpleTileApp):
     def _handle_score(self, score):
         self._score.set_score(self._score.get_score()+score)
         self._scorebar.update_bar(self._score.get_score())
-
 
 class ScoreBar(tk.Frame):
     def __init__(self,master):
