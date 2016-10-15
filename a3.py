@@ -359,38 +359,35 @@ class VersusStatusBar(tk.Frame):
         """
         super().__init__(master)
         #Frame 1
-        self._frame1 = tk.Frame(self)
+        self._frame1 = tk.Frame(self,bg = 'black')
         self._frame1.pack(side = tk.TOP, expand = True, fill = tk.BOTH)
-        self._level = tk.Label(self._frame1, text = LEVEL_FORMAT.format(1))
+        self._level = tk.Label(self._frame1, text = LEVEL_FORMAT.format(1), fg = 'white', bg = 'black')
         self._level.pack()
         #Player and enemy health
         self._phmax = 0
         self._ehmax = 0
         self._phealth = 0
         self._ehealth = 0
-        #Frame 2
-        self._frame2 = tk.Frame(master,pady = 20)
-        self._frame2.pack(side = tk.BOTTOM, fill = tk.BOTH)
         #Player health info
         self.text_ph = tk.Label(self._frame1, text = \
-            HEALTH_FORMAT.format(int(self._phealth)))
+            HEALTH_FORMAT.format(int(self._phealth)),fg = 'white', bg = 'black')
         self.text_ph.pack(side = tk.LEFT, pady = 5)
         #Player health bar
-        self._ph = tk.Canvas(self._frame1, width = 200, height = 20)
+        self._ph = tk.Canvas(self._frame1, width = 195, height = 20, highlightbackground='green', bg = 'black')
         self._ph.pack(side = tk.LEFT)
         self._phbar = self._ph.create_rectangle(0,0,100,20, fill = 'green')
         #Enemy health info
         self.text_eh = tk.Label(self._frame1, text = \
-            HEALTH_FORMAT.format(int(self._ehealth)))
+            HEALTH_FORMAT.format(int(self._ehealth)),fg = 'white', bg = 'black')
         self.text_eh.pack(side = tk.RIGHT, pady = 5)
         #Enemy health bar
-        self._eh = tk.Canvas(self._frame1, width = 200, height = 20)
+        self._eh = tk.Canvas(self._frame1, width = 195, height = 20,highlightbackground='red', bg = 'black')
         self._eh.pack(side = tk.RIGHT)
         self._ehbar = self._eh.create_rectangle(0,0,100,20, fill = 'red')
         #Swaps info
         self._swaps_per_turn = None
         self._swaps = tk.Label(self._frame1, text = SWAPS_LEFT_FORMAT.format(\
-            self._swaps_per_turn, self._swaps_per_turn))
+            self._swaps_per_turn, self._swaps_per_turn),fg = 'white', bg = 'black')
         self._swaps.pack(ipadx = 20)
 
     def set_pmax(self, max):
@@ -445,7 +442,7 @@ class VersusStatusBar(tk.Frame):
         self._phealth = int(curnt_health)
         #base info above
         self.text_ph.config(text = self._phealth)
-        self._ph.coords(self._phbar,(0,0,rest,20))
+        self._ph.coords(self._phbar,(0,0,rest,25))
 
     def set_eh(self, curnt_health):
         """
@@ -458,7 +455,7 @@ class VersusStatusBar(tk.Frame):
         self._ehealth = int(curnt_health)
         #base info above
         self.text_eh.config(text = self._ehealth)
-        self._eh.coords(self._ehbar,(200-rest,0,200,20))
+        self._eh.coords(self._ehbar,(200-rest,0,200,25))
 
 class ImageTileGridView(TileGridView):
     "Visualize the TileGrid."
@@ -523,6 +520,7 @@ class SinglePlayerTileApp(SimpleTileApp):
         Constructor(SinglePlayerTileApp, SimpleTileApp)
         """
         self._master = master
+        self._master.config(bg = 'black')
         self._master.title('Tile Game - Level 1')
         self._game = SimpleGame()
 
@@ -530,20 +528,20 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._game.on('run', self._handle_runs)
         self._statusbar = VersusStatusBar(self._master)
         self._statusbar.pack(side = tk.TOP)
-        self._centre = tk.Frame(master)
+        self._centre = tk.Frame(master, bg = 'black')
         self._centre.pack(expand = True, fill = tk.BOTH)
-        self._lhs = tk.Frame(self._centre)
+        self._lhs = tk.Frame(self._centre,bg = 'black')
         self._lhs.pack(side = tk.LEFT)
-        self._canvas1 = tk.Canvas(self._lhs, width = 100, height = 100)
-        self._canvas1.pack(side = tk.TOP)
-        self._rhs = tk.Frame(self._centre)
+        self._canvas1 = tk.Canvas(self._lhs, width = 78, height = 78, bg = 'black')
+        self._canvas1.pack(side = tk.TOP,padx = 10)
+        self._rhs = tk.Frame(self._centre,bg = 'black')
         self._rhs.pack(side = tk.RIGHT)
-        self._canvas2 = tk.Canvas(self._rhs, width = 100, height = 100)
-        self._canvas2.pack(side = tk.TOP)
+        self._canvas2 = tk.Canvas(self._rhs, width = 78, height = 78, bg = 'black')
+        self._canvas2.pack(side = tk.TOP,padx = 10)
         self._grid_view = ImageTileGridView(
             self._centre, self._game.get_grid(),
-            width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
-        self._grid_view.pack(expand = True, fill = tk.BOTH)
+            width=GRID_WIDTH, height=GRID_HEIGHT, bg='black', highlightthickness=0)
+        self._grid_view.pack()
 
 
         menubar = tk.Menu(self._master,tearoff = 0)
@@ -566,14 +564,14 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._statusbar.set_emax(self._enemy.get_max_health())
         self._statusbar.set_eh(self._enemy.get_health())
         self._player_image = tk.PhotoImage(file = './images/player.gif')
-        self._canvas1.create_image(50,50,
+        self._canvas1.create_image(40,40,
                                    image = self._player_image)
-        self._pn = tk.Label(self._lhs, text = 'Peter', fg = 'green')
-        self._pn.pack(side = tk.BOTTOM)
-        self._en = tk.Label(self._rhs, text = 'None', fg = 'red')
-        self._en.pack(side = tk.BOTTOM)
+        self._pn = tk.Label(self._lhs, text = 'Peter', fg = 'white', bg = 'green')
+        self._pn.pack(side = tk.BOTTOM,pady = 10)
+        self._en = tk.Label(self._rhs, text = 'None', fg = 'white', bg = 'red')
+        self._en.pack(side = tk.BOTTOM,pady = 10)
         self.image_enemy = self._canvas2.create_image(
-            50,50,image = self._grid_view.return_image()
+            40,40,image = self._grid_view.return_image()
             [TILE_COLOURS[self._enemy.get_type()]])
 
         #base info
@@ -755,9 +753,31 @@ class MultiTileGridView(ImageTileGridView):
 
 class MultiPlayerTileApp(SimpleTileApp):
     def __init__(self,master):
+        """
+        Constructor(MultiPlayerTileApp, SimpleTileApp)
+        """
+        #Base info
+        self._time = 1000
 
-        self._ans = messagebox.askyesno('Server', "Play game as Server [Yes] or Client [No]?")
+        self._powerv = 0
+
+        self._decrease_per_time = 50
+
+        self._port = 1996
+
+        self._win = False
+
+        self._level = 0
+
+        self._ready = False
+
+        self._colour = {}
+
         self._server_ip = None
+
+        #Selecet Mode
+        self._ans = messagebox.askyesno('Server', "Play game as Server [Yes] or Client [No]?")
+
         if not self._ans:
             self._server_ip = input('Please entre server IP address: ')
             self._labeltop = tk.Label(master, text = "Connected: {}".format(self._server_ip))
@@ -765,66 +785,106 @@ class MultiPlayerTileApp(SimpleTileApp):
         else:
             self._labeltop = tk.Label(master, text = "Unnonnected")
             self._labeltop.pack()
+
+        #Common part
         self._master = master
         self._game = SimpleGame()
 
         #self._game.on('swap', self._handle_swap)
         self._game.on('score', self._handle_score)
+
         self._frame = tk.Frame(master)
         self._frame.pack()
+
         self._grid_view = MultiTileGridView(
             self._frame, self._game.get_grid(),
             width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
         self._grid_view.pack(side = tk.LEFT, padx = 5)
+
+        self._power = tk.Canvas(self._frame, width = 19, height = 495, highlightbackground='blue')
+        self._power.pack(side = tk.LEFT)
+        self._line = self._power.create_rectangle(0,0,20,0, fill = 'blue')
+
         self._grid_view2 = MultiWindows(
             self._frame, self._game.get_grid(),
-            width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
+            width=GRID_WIDTH, height=GRID_HEIGHT, bg='red')
         self._grid_view2.pack(side = tk.RIGHT, padx = 5)
+
+        self._bf = tk.Frame(master)
+        self._bf.pack()
+
+        self._bl = tk.Label(self._bf, text = "Heal :")
+        self._bl.pack(side = tk.LEFT)
+
+        self._button = tk.Button(self._bf, text = "Unready", command = self.use_skill)
+        self._button.pack(side = tk.RIGHT)
+
         self._scorebar = ScoreBar(master)
-        self._scorebar.pack(side = tk.TOP)
+        self._scorebar.pack(side = tk.BOTTOM)
+
         self._score = Score(2000)
         self._scorebar.update_bar(self._score.get_score())
+
         menubar = tk.Menu(self._master,tearoff = 0)
         master.config(menu=menubar)
         filemenu = tk.Menu(menubar)
         menubar.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="Exit", command=self.quit)
 
-        #Base info
-        self._time = 1000
-        self._decrease_per_time = 50
-        self._port = 1996
-        self._win = False
-        self._level = 0
-        self._ready = False
-        self._colour = {}
         #
         if self._ans:
             self.server()
         else:
             self.client()
 
+    def use_skill(self):
+        """
+        Healing the player.
+        """
+        if self._powerv == 5000:
+            self._score.set_score(self._score.get_score()+1500)
+            self._scorebar.update_bar(self._score.get_score())
+            self._powerv = 0
+            self._power.coords(self._line, 0,0,20,self._powerv/10)
+            self._button.config(text = 'Unready')
+        else:
+            pass
+
     def reset_colour(self):
+        """
+        Reset the colour dictionary.
+        """
         self._colour = {}
-        #Server part
+
+    #Server part
     def server(self):
-            self._master.title("Server - Online")
-            self._socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.bind(((''),self._port))
-            self._socket.listen(1)
-            self._tcpCliSock = None
-            self._bottom_frame = tk.Frame(self._master)
-            self._bottom_frame.pack(side = tk.BOTTOM)
-            self.wait_client()
-        #Client part
+        """
+        Start as a server
+        """
+        self._master.title("Server - Online")
+        self._socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.bind(((''),self._port))
+        self._socket.listen(1)
+        self._tcpCliSock = None
+        self._bottom_frame = tk.Frame(self._master)
+        self._bottom_frame.pack(side = tk.BOTTOM)
+        self.wait_client()
+
+    #Client part
     def client(self):
-            self._master.title("Client - Connected to {}".format(self._server_ip))
-            self._tcpCliSock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._tcpCliSock.connect((str(self._server_ip),self._port))
-            self.wait_client()
-            print('connected')
+        """
+        Start as an client
+        """
+        self._master.title("Client - Connected to {}".format(self._server_ip))
+        self._tcpCliSock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._tcpCliSock.connect((str(self._server_ip),self._port))
+        self.wait_client()
+        print('connected')
 
     def wait_client(self):
+        """
+        Connect to the client
+        """
         if self._ans:
             print('waiting for connection...')
             self._tcpCliSock, addr = self._socket.accept()
@@ -834,7 +894,7 @@ class MultiPlayerTileApp(SimpleTileApp):
 
     def decrease(self):
         """
-        Decrease the score per two seconds.
+        Decrease the score according to self._decrease_per_time, and also send and receive data through the socket.
         """
         score = self._score.get_score() - self._decrease_per_time
         self._score.set_score(score)
@@ -857,10 +917,10 @@ class MultiPlayerTileApp(SimpleTileApp):
                 del dict1['score']
                 self._grid_view2.delete(tk.ALL)
                 for x in list(dict1):
-                    self._grid_view2.refresh(self._grid_view2.rc_to_xy(x), TILE_COLOURS[dict1[x]])
+                    self._grid_view2.refresh(self._grid_view2.rc_to_xy(x),
+                                             TILE_COLOURS[dict1[x]])
 
             except:
-                raise Exception
                 self._labeltop.config(text = "Unconnected")
                 messagebox.showinfo(title="Error", message="Connection lost.")
                 self._master.destroy()
@@ -913,10 +973,10 @@ class MultiPlayerTileApp(SimpleTileApp):
                 del dict1['score']
                 self._grid_view2.delete(tk.ALL)
                 for x in list(dict1):
-                    self._grid_view2.refresh(self._grid_view2.rc_to_xy(x), TILE_COLOURS[dict1[x]])
+                    self._grid_view2.refresh(self._grid_view2.rc_to_xy(x),
+                                             TILE_COLOURS[dict1[x]])
 
             except:
-                raise Exception
                 self._labeltop.config(text = "Lost connection to server")
                 messagebox.showinfo(title="Error", message="Connection lost.")
                 self._master.destroy()
@@ -933,11 +993,11 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._level += 1
         if self._level == 10:
             self._time = 800
-        elif self._level == 20:
+        elif self._level == 30:
             self._decrease_per_time = 80
-        elif self._level == 40:
+        elif self._level == 80:
             self._decrease_per_time = 120
-        elif self._level == 60:
+        elif self._level == 120:
             self._decrease_per_time = 200
         if int(self._score.get_score()) > int(self._scorebar.get_escore()):
             self._scorebar.config_canvas('winning')
@@ -957,7 +1017,15 @@ class MultiPlayerTileApp(SimpleTileApp):
             self._tcpCliSock.close()
 
     def _handle_score(self, score):
+        """
+        Manage the score and the power bar.
+        """
         self._score.set_score(self._score.get_score()+score)
+        self._powerv += score
+        if self._powerv > 5000:
+            self._powerv = 5000
+            self._button.config(text = "Ready")
+        self._power.coords(self._line, 0,0,20,self._powerv/10)
         self._scorebar.update_bar(self._score.get_score())
 
 class MultiWindows(tk.Canvas):
@@ -989,8 +1057,8 @@ class MultiWindows(tk.Canvas):
 
     def rc_to_xy(self,position):
         x , y = position
-        x = 40 + x*91
-        y = 40 + y*91
+        x = 40 + x*94
+        y = 40 + y*94
         return (y,x)
 
 class ScoreBar(tk.Frame):
@@ -1010,13 +1078,13 @@ class ScoreBar(tk.Frame):
         self._label2.pack(side = tk.RIGHT)
         self._frame = tk.Frame(self)
         self._frame.pack(expand = True, fill = tk.BOTH)
-        self._scorebar = tk.Canvas(self._frame, width = 300, height = 20)
+        self._scorebar = tk.Canvas(self._frame, width = 295, height = 19, highlightbackground='green')
         self._scorebar.pack(side = tk.LEFT)
         self._canvas = tk.Canvas(self, width = 100, height = 100)
         self._canvas.pack(side = tk.BOTTOM)
         self._status = self._canvas.create_image(50,50,image =self._equal)
         self._bar = self._scorebar.create_rectangle(0, 0, 300, 20, fill = 'green')
-        self._scorebar2 = tk.Canvas(self._frame, width = 300, height = 20)
+        self._scorebar2 = tk.Canvas(self._frame, width = 295, height = 19,highlightbackground='red')
         self._scorebar2.pack(side = tk.RIGHT)
         self._bar2 = self._scorebar2.create_rectangle(0, 0, 300, 20, fill = 'red')
         self._score = None
@@ -1069,7 +1137,7 @@ def task3():
 
 def main():
     # Choose relevant task to run
-    task2()
+    task3()
 
 
 ################################################################################
