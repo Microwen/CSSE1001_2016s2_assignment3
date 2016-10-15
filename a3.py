@@ -764,11 +764,11 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._grid_view = MultiTileGridView(
             self._frame, self._game.get_grid(),
             width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
-        self._grid_view.pack(side = tk.LEFT)
+        self._grid_view.pack(side = tk.LEFT, padx = 5)
         self._grid_view2 = MultiWindows(
             self._frame, self._game.get_grid(),
             width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
-        self._grid_view2.pack(side = tk.RIGHT)
+        self._grid_view2.pack(side = tk.RIGHT, padx = 5)
         self._scorebar = ScoreBar(master)
         self._scorebar.pack(side = tk.TOP)
         self._score = Score(2000)
@@ -798,7 +798,6 @@ class MultiPlayerTileApp(SimpleTileApp):
         #Server part
     def server(self):
             self._master.title("Server - Online")
-            self._labeltop.config(text = "Connected")
             self._socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.bind(((''),self._port))
             self._socket.listen(1)
@@ -819,6 +818,7 @@ class MultiPlayerTileApp(SimpleTileApp):
             print('waiting for connection...')
             self._tcpCliSock, addr = self._socket.accept()
             print('...connected from:', addr)
+            self._labeltop.config(text = "Connected: {}".format(addr))
         self.decrease()
 
     def decrease(self):
