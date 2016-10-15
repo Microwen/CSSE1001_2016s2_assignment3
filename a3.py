@@ -764,7 +764,11 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._grid_view = MultiTileGridView(
             self._frame, self._game.get_grid(),
             width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
-        self._grid_view.pack()
+        self._grid_view.pack(side = tk.LEFT)
+        self._grid_view2 = MultiWindows(
+            self._frame, self._game.get_grid(),
+            width=GRID_WIDTH, height=GRID_HEIGHT, bg='black')
+        self._grid_view2.pack(side = tk.RIGHT)
         self._scorebar = ScoreBar(master)
         self._scorebar.pack(side = tk.TOP)
         self._score = Score(2000)
@@ -782,15 +786,7 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._win = False
         self._level = 0
         self._ready = False
-        self._colour = {(1, 2): None, (3, 2): None, (0, 0): None, (5, 0): None, 
-                         (3, 0): None, (0, 4): None, (5, 4): None, (1, 4): None, 
-                         (5, 5): None, (1, 3): None, (0, 5): None, (2, 1): None, 
-                         (5, 1): None, (4, 2): None, (2, 5): None, (1, 0): None, 
-                         (3, 5): None, (0, 1): None, (5, 3): None, (4, 1): None, 
-                         (0, 2): None, (3, 3): None, (1, 5): None, (3, 4): None, 
-                         (3, 1): None, (5, 2): None, (4, 4): None, (1, 1): None, 
-                         (2, 0): None, (4, 3): None, (2, 2): None, (4, 5): None, 
-                         (2, 3): None, (4, 0): None, (0, 3): None, (2, 4): None}
+        self._colour = {}
         #
         if self._ans:
             self.server()
@@ -798,15 +794,7 @@ class MultiPlayerTileApp(SimpleTileApp):
             self.client()
 
     def reset_colour(self):
-        self._colour = {(1, 2): None, (3, 2): None, (0, 0): None, (5, 0): None, 
-                         (3, 0): None, (0, 4): None, (5, 4): None, (1, 4): None, 
-                         (5, 5): None, (1, 3): None, (0, 5): None, (2, 1): None, 
-                         (5, 1): None, (4, 2): None, (2, 5): None, (1, 0): None, 
-                         (3, 5): None, (0, 1): None, (5, 3): None, (4, 1): None, 
-                         (0, 2): None, (3, 3): None, (1, 5): None, (3, 4): None, 
-                         (3, 1): None, (5, 2): None, (4, 4): None, (1, 1): None, 
-                         (2, 0): None, (4, 3): None, (2, 2): None, (4, 5): None, 
-                         (2, 3): None, (4, 0): None, (0, 3): None, (2, 4): None}
+        self._colour = {}
         #Server part
     def server(self):
             self._master.title("Server - Online")
@@ -856,10 +844,9 @@ class MultiPlayerTileApp(SimpleTileApp):
                 dict1 = eval(data)
                 data = int(dict1['score'])
                 del dict1['score']
-                #
-                #
-                #
-                #
+                self._grid_view2.delete(tk.ALL)
+                for x in list(dict1):
+                    self._grid_view2.refresh(self._grid_view2.rc_to_xy(x), TILE_COLOURS[dict1[x]])
 
             except:
                 raise Exception
@@ -876,8 +863,7 @@ class MultiPlayerTileApp(SimpleTileApp):
                     self.reset_colour()
                     for i in self._game.get_grid():
                         i = str(i)
-                        if (int(i[2]),int(i[5])) in (self._colour):
-                            self._colour[(int(i[2]),int(i[5]))] = i[15:-2]
+                        self._colour[(int(i[2]),int(i[5]))] = i[15:-3]
 
                     self._colour["score"] = self._score.get_score()
                     self._colour = str(self._colour)
@@ -893,8 +879,7 @@ class MultiPlayerTileApp(SimpleTileApp):
             self.reset_colour()
             for i in self._game.get_grid():
                 i = str(i)
-                if (int(i[2]),int(i[5])) in (self._colour):
-                    self._colour[(int(i[2]),int(i[5]))] = i[15:-2]
+                self._colour[(int(i[2]),int(i[5]))] = i[15:-3]
 
             self._colour["score"] = self._score.get_score()
             self._colour = str(self._colour)
@@ -915,10 +900,9 @@ class MultiPlayerTileApp(SimpleTileApp):
                 dict1 = eval(data)
                 data = int(dict1['score'])
                 del dict1['score']
-                #
-                #
-                #
-                #
+                self._grid_view2.delete(tk.ALL)
+                for x in list(dict1):
+                    self._grid_view2.refresh(self._grid_view2.rc_to_xy(x), TILE_COLOURS[dict1[x]])
 
             except:
                 raise Exception
@@ -965,6 +949,39 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._score.set_score(self._score.get_score()+score)
         self._scorebar.update_bar(self._score.get_score())
 
+class MultiWindows(tk.Canvas):
+    def __init__(self, master, grid, *args, width=GRID_WIDTH,
+                 height=GRID_HEIGHT,**kwargs):
+        super().__init__(master, width=width, height=height, **kwargs)
+        self._light_sky_blue = tk.PhotoImage(file = './images/light sky blue.gif')
+        self._purple = tk.PhotoImage(file = './images/purple.gif')
+        self._gold = tk.PhotoImage(file = './images/gold.gif')
+        self._green = tk.PhotoImage(file = './images/green.gif')
+        self._blue = tk.PhotoImage(file = './images/blue.gif')
+        self._red = tk.PhotoImage(file = './images/red.gif')
+        self._light_sky_blues = tk.PhotoImage(file = './images/light sky blues.gif')
+        self._purples = tk.PhotoImage(file = './images/purples.gif')
+        self._golds = tk.PhotoImage(file = './images/golds.gif')
+        self._greens = tk.PhotoImage(file = './images/greens.gif')
+        self._blues = tk.PhotoImage(file = './images/blues.gif')
+        self._reds = tk.PhotoImage(file = './images/reds.gif')
+        self._images = {'red':self._red,
+                        'blue': self._blue,
+                        'green':self._green,
+                        'gold':self._gold,
+                        'purple':self._purple,
+                        'light sky blue':self._light_sky_blue}
+
+    def refresh(self, position, image):
+        x,y = position
+        self.create_image(x, y, image = self._images[image])
+
+    def rc_to_xy(self,position):
+        x , y = position
+        x = 40 + x*91
+        y = 40 + y*91
+        return (y,x)
+
 class ScoreBar(tk.Frame):
     def __init__(self,master):
         super().__init__(master)
@@ -998,7 +1015,7 @@ class ScoreBar(tk.Frame):
 
     def update_bar(self,score):
         score = score/2000*300
-        self._scorebar.coords(self._bar, (0, 0, score, 20))
+        self._scorebar.coords(self._bar, (300 - score, 0, 300, 20))
 
     def update_bar2(self, score):
         score = score
