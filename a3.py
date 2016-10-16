@@ -952,9 +952,10 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._tcpCliSock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._tcpCliSock.connect((str(self._server_ip),self._port))
 
-        self.wait_client()
-
         print('connected')
+
+        self.wait_client()
+        
 
     def wait_client(self):
         """
@@ -976,14 +977,14 @@ class MultiPlayerTileApp(SimpleTileApp):
         Decrease the score according to self._decrease_per_time, and also send and receive data through the socket.
         """
 
+        if not self._ready:
+            messagebox.showinfo(title="Ready", message="Are you Ready?")
+            self._ready = not self._ready
+
         score = self._score.get_score() - self._decrease_per_time
 
         self._score.set_score(score)
         self._scorebar.update_bar(self._score.get_score())
-
-        if not self._ready:
-            messagebox.showinfo(title="Ready", message="Are you Ready?")
-            self._ready = not self._ready
 
         self.connection()
 
