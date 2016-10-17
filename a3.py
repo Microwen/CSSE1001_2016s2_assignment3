@@ -188,7 +188,7 @@ class SimpleStatusBar(tk.Frame):
         self._score = tk.Label(self._status, text = SCORE_FORMAT.format(0))
         self._score.pack(side = tk.LEFT)
 
-        self._swap = tk.Label(self._status, text = "Swap {} made".format(0))
+        self._swap = tk.Label(self._status, text = SWAPS_FORMAT.format(0,''))
         self._swap.pack(side = tk.RIGHT)
 
     def set_score(self,score):
@@ -205,7 +205,10 @@ class SimpleStatusBar(tk.Frame):
 
         SimpleStatusBar.set_swap(SimpleStatusBar, int)
         """
-        self._swap.config(text = "Swap {} made".format(swap))
+        if swap >1:
+            self._swap.config(text = SWAPS_FORMAT.format(swap,'s'))
+        else:
+            self._swap.config(text = SWAPS_FORMAT.format(swap,''))
 
 class Character(object):
     """
@@ -377,7 +380,7 @@ class VersusStatusBar(tk.Frame):
         self._ph.pack(side = tk.LEFT)
         self._phbar = self._ph.create_rectangle(0,0,100,20, fill = 'green')
         #Enemy health info
-        self.text_eh = tk.Label(self._frame1, text = \
+        self.text_eh = tk.Label(self._frame1, text = 
             HEALTH_FORMAT.format(int(self._ehealth)),fg = 'white', bg = 'black')
         self.text_eh.pack(side = tk.RIGHT, pady = 5)
         #Enemy health bar
@@ -386,7 +389,7 @@ class VersusStatusBar(tk.Frame):
         self._ehbar = self._eh.create_rectangle(0,0,100,20, fill = 'red')
         #Swaps info
         self._swaps_per_turn = None
-        self._swaps = tk.Label(self._frame1, text = SWAPS_LEFT_FORMAT.format(\
+        self._swaps = tk.Label(self._frame1, text = SWAPS_LEFT_FORMAT.format(
             self._swaps_per_turn, self._swaps_per_turn),fg = 'white', bg = 'black')
         self._swaps.pack(ipadx = 20)
 
@@ -420,8 +423,12 @@ class VersusStatusBar(tk.Frame):
 
         VersusStatusBar.set_swaps(tk.Frame, int)
         """
-        self._swaps.config(text = SWAPS_LEFT_FORMAT.format(\
-            self._swaps_per_turn, swaps))
+        if swaps > 1:
+            self._swaps.config(text = SWAPS_LEFT_FORMAT.format(\
+            swaps,'s'))
+        else:
+            self._swaps.config(text = SWAPS_LEFT_FORMAT.format(\
+            swaps,''))
 
     def set_level(self, current):
         """
@@ -441,7 +448,7 @@ class VersusStatusBar(tk.Frame):
         rest = (curnt_health/self._phmax)*200
         self._phealth = int(curnt_health)
         #base info above
-        self.text_ph.config(text = self._phealth)
+        self.text_ph.config(text = "Player's health: {}".format(self._phealth))
         self._ph.coords(self._phbar,(0,0,rest,25))
 
     def set_eh(self, curnt_health):
@@ -454,7 +461,7 @@ class VersusStatusBar(tk.Frame):
         rest = (curnt_health/self._phmax)*200
         self._ehealth = int(curnt_health)
         #base info above
-        self.text_eh.config(text = self._ehealth)
+        self.text_eh.config(text = "Enemy's health: {}".format(self._ehealth))
         self._eh.coords(self._ehbar,(200-rest,0,200,25))
 
 class ImageTileGridView(TileGridView):
@@ -907,7 +914,6 @@ class MultiPlayerTileApp(SimpleTileApp):
         Healing the player, the method can be called by the skill button.
         """
         if self._powerv == 5000:
-
             self._score.set_score(self._score.get_score()+1500)
             self._scorebar.update_bar(self._score.get_score())
 
@@ -915,8 +921,6 @@ class MultiPlayerTileApp(SimpleTileApp):
             self._power.coords(self._line, 0,0,20,self._powerv/10)
 
             self._button.config(text = 'Unready')
-        else:
-            pass
 
     def reset_pack(self):
         """
@@ -1036,10 +1040,8 @@ class MultiPlayerTileApp(SimpleTileApp):
             #update player status
             self._scorebar.update_bar2(int(self._data))
         except:
-
             self._labeltop.config(text = "Unconnected")
             messagebox.showinfo(title="Error", message="Connection lost.")
-
             self._master.destroy()
 
         print('received')
@@ -1067,6 +1069,13 @@ class MultiPlayerTileApp(SimpleTileApp):
                 str(self._pack).encode(encoding='utf_8'))
             print('sent', self._score.get_score())
 
+            if self._score.get_score() == 0:
+                messagebox.showinfo(title="Sorry", message="You lose")
+                self._grid_view.disable()
+                self._tcpCliSock.close()
+                self._master.destroy()
+            else:
+                pass
 
         except:
             raise Exception
@@ -1104,10 +1113,6 @@ class MultiPlayerTileApp(SimpleTileApp):
                 self._grid_view.disable()
             else:
                 self._master.after(self._time,self.process)
-        else:
-            messagebox.showinfo(title="Sorry", message="You lose")
-            self._tcpCliSock.send(str(0).encode(encoding='utf_8'))
-            self._tcpCliSock.close()
 
     def data_analyse(self):
         """
@@ -1117,7 +1122,7 @@ class MultiPlayerTileApp(SimpleTileApp):
             self._win = True
             messagebox.showinfo(title="Contragulation", message="You win")
             self._grid_view.disable()
-            self._tcpCliSock.close()
+            self._master.destroy()
         else:
             pass
 
@@ -1132,6 +1137,7 @@ class MultiPlayerTileApp(SimpleTileApp):
             self._button.config(text = "Ready")
         self._power.coords(self._line, 0,0,20,self._powerv/10)
         self._scorebar.update_bar(self._score.get_score())
+
 
 class MultiWindows(tk.Canvas):
     """
