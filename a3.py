@@ -327,6 +327,7 @@ class Player(Character):
         self._swaps_per_turn = swaps_per_turn
         self._swaps_left = swaps_per_turn
         self._base_attack = base_attack
+        self._damage = 0
 
     def get_swaps_per_turn(self):
         return self._swaps_per_turn
@@ -343,12 +344,15 @@ class Player(Character):
     def reset_swaps(self):
         self._swaps_left = self._swaps_per_turn
 
+    def damage(self, damage):
+        self._damage = damage
+
     def attack(self, runs,defender_type):
         list1 = []
         for i in runs:
             tile = str(i[i.find_dominant_cell()])
             tile = tile[6:len(tile)-2]
-            damage = len(i) * i.get_max_dimension() * self._base_attack
+            damage = len(i) * i.get_max_dimension() * self._base_attack + self._damage/5
             list1.append((tile,damage))
         return list1
 
@@ -759,11 +763,13 @@ class SinglePlayerTileApp(SimpleTileApp):
         According to runs, damage the Enemy.
         """
         score = 0
+        self._player.damage(self._attack)
         for i in self._player.attack(runs,self._enemy.get_type()):
             if i[0] == self._enemy.get_type():
                 self.attack_player()
             else:
                 score += i[1]
+        self._attack = 0
         self._enemy.lose_health((score)/self.base_attack)
         self.set_enemy_h(self._enemy.get_health())
 
