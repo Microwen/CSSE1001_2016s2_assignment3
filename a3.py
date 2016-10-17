@@ -532,7 +532,9 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._game = SimpleGame()
 
         self._game.on('swap', self._handle_swap)
+        self._game.on('score', self._set_score)
         self._game.on('run', self._handle_runs)
+        self._game.on('swap_resolution', self._handle_swap_resolution)
 
         self._statusbar = VersusStatusBar(self._master)
         self._statusbar.pack(side = tk.TOP)
@@ -598,6 +600,7 @@ class SinglePlayerTileApp(SimpleTileApp):
         #base info
         self._level_count = 1
         self.base_attack = 3
+        self._attack = 0
 
         self._statusbar.set_swaps_per_turn(self._player.get_swaps_per_turn())
         self._statusbar.set_swaps(self._player.get_swaps())
@@ -610,6 +613,16 @@ class SinglePlayerTileApp(SimpleTileApp):
             'psychic': 'Great UQ',
             'ice': 'L.Rabbit'}
         self._en.config(text = self._index[self._enemy.get_type()])
+
+    def _set_score(self, score):
+        self._attack = score
+
+    def _handle_swap_resolution(self, from_pos, to_pos):
+        if self._enemy.get_health() == 0:
+            self.next_level()
+        if self._player.get_health() == 0:
+            self.die()
+
     def die(self):
         """
         If Player die, reset all the entire game.
@@ -717,17 +730,16 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._master.title('Tile Game - Level {}'.format(self._level_count))
         self._statusbar.set_level(self._level_count)
 
-    def attack_player(self, damage):
+    def attack_player(self):
         """
         Damage the player, if player health come to zero, Player die.
 
-        SinglePlayerTileApp.attack_player(SinglePlayerTileApp, int)
+        SinglePlayerTileApp.attack_player(SinglePlayerTileApp)
         """
-        self._player.lose_health(damage)
+        self._player.lose_health(self._attack/5*self._level_count)
         self.set_player_h(self._player.get_health())
-        if self._player.get_health() == 0:
-            self.die()
-
+        self._attack = 0
+        
     def _handle_swap(self, from_pos, to_pos):
         """
         Run when a swap on the grid happens.
@@ -735,7 +747,10 @@ class SinglePlayerTileApp(SimpleTileApp):
         self._player.record_swap()
         self._statusbar.set_swaps(self._player.get_swaps())
         if self._player.get_swaps() == 0:
-            self.attack_player(int(self._enemy.attack()))
+            self._attack = self.base_attack * 15
+            self.attack_player()
+            if self._player.get_health() == 0:
+                self.die()
             self._player.reset_swaps()
             self._statusbar.set_swaps(self._player.get_swaps())
 
@@ -746,13 +761,11 @@ class SinglePlayerTileApp(SimpleTileApp):
         score = 0
         for i in self._player.attack(runs,self._enemy.get_type()):
             if i[0] == self._enemy.get_type():
-                self.attack_player(i[1]/5)
+                self.attack_player()
             else:
                 score += i[1]
         self._enemy.lose_health((score)/self.base_attack)
         self.set_enemy_h(self._enemy.get_health())
-        if self._enemy.get_health() == 0:
-            self.next_level()
 
 
 
@@ -959,7 +972,6 @@ class MultiPlayerTileApp(SimpleTileApp):
         print('connected')
 
         self.wait_client()
-        
 
     def wait_client(self):
         """
@@ -1137,7 +1149,6 @@ class MultiPlayerTileApp(SimpleTileApp):
             self._button.config(text = "Ready")
         self._power.coords(self._line, 0,0,20,self._powerv/10)
         self._scorebar.update_bar(self._score.get_score())
-
 
 class MultiWindows(tk.Canvas):
     """
@@ -1318,7 +1329,7 @@ def task3():
 
 def main():
     # Choose relevant task to run
-    task3()
+    task2()
 
 
 ################################################################################
