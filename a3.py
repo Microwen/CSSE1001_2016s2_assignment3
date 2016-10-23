@@ -171,6 +171,9 @@ class SimplePlayer(object):
         """
         return self._swap
     def reset_swaps(self):
+        """
+        Reset swap count
+        """
         self._swap = 0
 
 class SimpleStatusBar(tk.Frame):
@@ -322,7 +325,13 @@ class Enemy(Character):
         return random.randint(self._attack[0],self._attack[1])
 
 class Player(Character):
+    """
+    Manage Player.
+    """
     def __init__(self, max_health, swaps_per_turn, base_attack):
+        """
+        Constructor(Character, int, int, int)
+        """
         super().__init__(max_health)
         self._swaps_per_turn = swaps_per_turn
         self._swaps_left = swaps_per_turn
@@ -330,24 +339,42 @@ class Player(Character):
         self._damage = 0
 
     def get_swaps_per_turn(self):
+        """
+        Return the number of swap player can make per turn.
+        """
         return self._swaps_per_turn
 
     def record_swap(self):
+        """
+        Record swap and return rest swaps player can make.
+        """
         self._swaps_left -= 1
         if self._swaps_left < 0:
             self._swaps_left = 0
         return self._swaps_left
 
     def get_swaps(self):
+        """
+        Return the rest swaps number player can make.
+        """
         return self._swaps_left
 
     def reset_swaps(self):
+        """
+        Reset swaps count.
+        """
         self._swaps_left = self._swaps_per_turn
 
     def damage(self, damage):
+        """
+        Set the damage can make to the enemy by player
+        """
         self._damage = damage
 
     def attack(self, runs,defender_type):
+        """
+        Return the attack value.
+        """
         list1 = []
         for i in runs:
             tile = str(i[i.find_dominant_cell()])
@@ -368,7 +395,8 @@ class VersusStatusBar(tk.Frame):
         #Frame 1
         self._frame1 = tk.Frame(self,bg = 'black')
         self._frame1.pack(side = tk.TOP, expand = True, fill = tk.BOTH)
-        self._level = tk.Label(self._frame1, text = LEVEL_FORMAT.format(1), fg = 'white', bg = 'black')
+        self._level = tk.Label(self._frame1, text = LEVEL_FORMAT.format(1),
+                               fg = 'white', bg = 'black')
         self._level.pack()
         #Player and enemy health
         self._phmax = 0
@@ -376,11 +404,12 @@ class VersusStatusBar(tk.Frame):
         self._phealth = 0
         self._ehealth = 0
         #Player health info
-        self.text_ph = tk.Label(self._frame1, text = \
+        self.text_ph = tk.Label(self._frame1, text = 
             HEALTH_FORMAT.format(int(self._phealth)),fg = 'white', bg = 'black')
         self.text_ph.pack(side = tk.LEFT, pady = 5)
         #Player health bar
-        self._ph = tk.Canvas(self._frame1, width = 195, height = 20, highlightbackground='green', bg = 'black')
+        self._ph = tk.Canvas(self._frame1, width = 195, height = 14,
+                             highlightbackground='green', bg = 'black')
         self._ph.pack(side = tk.LEFT)
         self._phbar = self._ph.create_rectangle(0,0,100,20, fill = 'green')
         #Enemy health info
@@ -388,7 +417,8 @@ class VersusStatusBar(tk.Frame):
             HEALTH_FORMAT.format(int(self._ehealth)),fg = 'white', bg = 'black')
         self.text_eh.pack(side = tk.RIGHT, pady = 5)
         #Enemy health bar
-        self._eh = tk.Canvas(self._frame1, width = 195, height = 20,highlightbackground='red', bg = 'black')
+        self._eh = tk.Canvas(self._frame1, width = 195, height = 14,
+                             highlightbackground='red', bg = 'black')
         self._eh.pack(side = tk.RIGHT)
         self._ehbar = self._eh.create_rectangle(0,0,100,20, fill = 'red')
         #Swaps info
@@ -428,10 +458,10 @@ class VersusStatusBar(tk.Frame):
         VersusStatusBar.set_swaps(tk.Frame, int)
         """
         if swaps > 1:
-            self._swaps.config(text = SWAPS_LEFT_FORMAT.format(\
+            self._swaps.config(text = SWAPS_LEFT_FORMAT.format(
             swaps,'s'))
         else:
-            self._swaps.config(text = SWAPS_LEFT_FORMAT.format(\
+            self._swaps.config(text = SWAPS_LEFT_FORMAT.format(
             swaps,''))
 
     def set_level(self, current):
@@ -530,6 +560,8 @@ class SinglePlayerTileApp(SimpleTileApp):
         """
         Constructor(SinglePlayerTileApp, SimpleTileApp)
         """
+        messagebox.showinfo(title="Notification",
+                            message="The image of enemy actually means something. If the tiles whose images are same with enemy's image are connected, player will be attacked by the enemy, else otherwise. So there are two situations player will be attacked:\n1.The swap count comes to ZERO.\n2.Enemy tiles are connected.")
         self._master = master
         self._master.config(bg = 'black')
         self._master.title('Tile Game - Level 1')
@@ -820,7 +852,8 @@ class MultiTileGridView(ImageTileGridView):
         Animated the drawing.
         """
         if self._countp != len(self._list_pos):
-            self.redraw_tile(self._list_pos[self._countp], selected=False, tile=self._list_cell[self._countp])
+            self.redraw_tile(self._list_pos[self._countp], 
+                             selected=False, tile=self._list_cell[self._countp])
             self._countp+=1
             self._master.after(15, self.animation)
 
@@ -856,7 +889,8 @@ class MultiPlayerTileApp(SimpleTileApp):
 
             self._server_ip = input('Please entre server IP address: ')
 
-            self._labeltop = tk.Label(master, text = "Connected: {}".format(self._server_ip))
+            self._labeltop = tk.Label(master,
+                                      text = "Connected: {}".format(self._server_ip))
             self._labeltop.pack()
 
         else:
@@ -881,7 +915,8 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._grid_view.pack(side = tk.LEFT, padx = 5)
 
         #Power bar
-        self._power = tk.Canvas(self._frame, width = 19, height = 495, highlightbackground='blue')
+        self._power = tk.Canvas(self._frame, width = 19, 
+                                height = 495, highlightbackground='blue')
         self._power.pack(side = tk.LEFT)
         self._line = self._power.create_rectangle(0,0,20,0, fill = 'blue')
 
@@ -900,7 +935,8 @@ class MultiPlayerTileApp(SimpleTileApp):
         self._bl.pack(side = tk.LEFT)
 
         #Skill Button
-        self._button = tk.Button(self._bf, text = "Unready", command = self.use_skill)
+        self._button = tk.Button(self._bf, text = "Unready", 
+                                 command = self.use_skill)
         self._button.pack(side = tk.RIGHT)
 
         #Score bar
@@ -996,7 +1032,8 @@ class MultiPlayerTileApp(SimpleTileApp):
 
     def process(self):
         """
-        Decrease the score according to self._decrease_per_time, and also send and receive data through the socket.
+        Decrease the score according to self._decrease_per_time,
+        and also send and receive data through the socket.
         """
 
         if not self._ready:
@@ -1241,7 +1278,8 @@ class ScoreBar(tk.Frame):
         self._frame = tk.Frame(self)
         self._frame.pack(expand = True, fill = tk.BOTH)
 
-        self._scorebar = tk.Canvas(self._frame, width = 295, height = 19, highlightbackground='green')
+        self._scorebar = tk.Canvas(self._frame, width = 295,
+                                   height = 19, highlightbackground='green')
         self._scorebar.pack(side = tk.LEFT)
 
         self._canvas = tk.Canvas(self, width = 100, height = 100)
@@ -1250,7 +1288,8 @@ class ScoreBar(tk.Frame):
         self._status = self._canvas.create_image(50,50,image =self._equal)
         self._bar = self._scorebar.create_rectangle(0, 0, 300, 20, fill = 'green')
 
-        self._scorebar2 = tk.Canvas(self._frame, width = 295, height = 19,highlightbackground='red')
+        self._scorebar2 = tk.Canvas(self._frame, width = 295,
+                                    height = 19,highlightbackground='red')
         self._scorebar2.pack(side = tk.RIGHT)
 
         self._bar2 = self._scorebar2.create_rectangle(0, 0, 300, 20, fill = 'red')
@@ -1335,8 +1374,33 @@ def task3():
 
 def main():
     # Choose relevant task to run
-    task2()
-
+    def task1():
+        r.destroy()
+        root = tk.Tk()
+        app = SimpleTileApp(root)
+        root.mainloop()
+    def task2():
+        r.destroy()
+        root = tk.Tk()
+        app = SinglePlayerTileApp(root)
+        root.mainloop()
+    def task3():
+        r.destroy()
+        root = tk.Tk()
+        app = MultiPlayerTileApp(root)
+        root.mainloop()
+    r = tk.Tk()
+    r.title("G'day")
+    r.config(bg = 'black')
+    r.geometry('210x300')
+    r.resizable(width=False, height=False)
+    task1 = tk.Button(r, text = 'Play Task 1', command = task1)
+    task2 = tk.Button(r, text = 'Play Task 2', command = task2)
+    task3 = tk.Button(r, text = 'Play Task 3', command = task3)
+    task1.pack(pady = 30)
+    task2.pack(pady = 30)
+    task3.pack(pady = 30)
+    r.mainloop()
 
 ################################################################################
 # Write your code above - NOTE you should define a top-level
